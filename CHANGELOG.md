@@ -2,6 +2,24 @@
 
 Todas as mudanças importantes deste projeto ficam registradas aqui.
 
+## [1.7] - 2026-11-14
+
+### Adicionado
+- **Integração opcional com o RivaTuner (RTSS)**: a bateria (`PS5 75%   XBOX 77%`, nas cores do nível) e os avisos aparecem **dentro do jogo**, desenhados pelo RivaTuner, inclusive em **tela cheia exclusiva com as otimizações de tela inteira desligadas**, onde nenhuma janela do Windows aparece (relatado pelo usuário no *Resident Evil Revelations*, DX9).
+  - O programa só escreve o texto pelo canal oficial do RivaTuner (memória compartilhada `RTSSSharedMemoryV2`, a mesma do HWiNFO e do AIDA64), usa um espaço próprio, respeita a trava "ocupado" do RTSS e limpa o texto ao sair. **Nada é injetado no jogo.**
+  - Menu da bandeja **"RivaTuner (RTSS)"**: Desligado / Só em jogos em tela cheia exclusiva (padrão) / Sempre. O submenu mostra se o RivaTuner está aberto.
+  - Em tela cheia exclusiva, a janela do overlay e os cartões ficam escondidos e tudo vai para o RivaTuner, sem duplicar. Os sons continuam.
+  - A tela cheia exclusiva é detectada pelo próprio Windows (`SHQueryUserNotificationState`).
+- Opções de linha de comando `--rtss-modo desligado|tela-cheia|sempre` e `--rtss-mapa <nome>` (RivaTuner simulado, usado pela suíte).
+- Testes R1 (texto), R2 (RivaTuner simulado: espaço livre, atualização, trava, limpeza, RTSS antigo) e A15 (o programa escreve no RivaTuner), mais o item manual M33.
+
+### Alterado
+- O `compilar.bat` compila com `/unsafe` (a trava do RivaTuner precisa de uma operação atômica na memória compartilhada).
+- Documentação de tela cheia: jogos DX12 sempre mostram o overlay; jogos DX9/10/11 com as otimizações desligadas precisam do RivaTuner.
+
+### Corrigido
+- A suíte falhava nos testes de janela (A11, A12) quando havia um jogo aberto em tela cheia exclusiva, porque o programa (corretamente) esconde a janela nesse caso. Os testes de janela agora rodam com o RivaTuner desligado.
+
 ## [1.6.1] - 2026-11-14
 
 ### Alterado

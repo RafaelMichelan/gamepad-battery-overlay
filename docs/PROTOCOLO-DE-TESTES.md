@@ -40,6 +40,8 @@ Para os testes de hardware, **deixe os controles ligados e parados**. Sem contro
 | T1 | Ícone da bandeja: tamanho 16/20/24 px, barra cheia em 100%, vazia em 0%, pelo menos 1 px acima de 0%, metade em 50%, controle claro/escuro conforme o tema, apagado sem controle | desenho gerado |
 | T2 | `assets\icone.ico` válido (16 a 256 px) e embutido no .exe | arquivo e .exe |
 | X5 | Atalho do Xbox: L3+R3 **juntos** dispara; L3 ou R3 sozinhos **não** | botões sintéticos |
+| R1 | RivaTuner: texto igual ao overlay (`PS5 75%` com a cor do nível, `+` carregando, USB mode, aviso numa segunda linha, vazio com o overlay oculto) | casos fixos |
+| R2 | RivaTuner **simulado** (memória compartilhada falsa, o RTSS de verdade não é tocado): pega o primeiro espaço livre, não mexe no espaço de outro programa, reaproveita o mesmo espaço, não reescreve sem mudança, respeita a trava "ocupado", limpa ao sair, escreve no campo antigo em RTSS < 2.7 e ignora quando não há RivaTuner | memória simulada |
 | G1 | Nome novo: as configurações e o "Iniciar com o Windows" migram do nome antigo, mantendo o tipo dos valores, uma vez só e sem sobrescrever | chaves de teste no registro |
 | U7 | Os 8 efeitos sonoros: WAV válido (cabeçalho bate com o conteúdo), de 0,1 a 1,5 s, pico entre -30 e -15 dBFS e sem estalo no fim | sons gerados |
 | H1 | Para cada controle conectado: MAC lido (12 dígitos hex) | controle real |
@@ -59,6 +61,7 @@ Para os testes de hardware, **deixe os controles ligados e parados**. Sem contro
 | A8 | "Testar notificações" roda inteiro sem sobrepor e sem travar | `--demo` |
 | A9 | Bateria abaixo de 10% aparece **mesmo com o overlay oculto** | `--teste-bateria-baixa` |
 | A10 | `--exportar-sons` gera os 8 arquivos .wav e sai | pasta temporária |
+| A15 | O programa aberto com `--rtss-modo sempre` escreve no RivaTuner simulado os controles conectados | `--rtss-mapa` |
 | A14 | A versão antiga (`DualSenseOverlay.exe`) aberta junto é fechada pelo programa novo | processo antigo simulado |
 | A13 | Notificações em inglês rodam sem sobrepor, e o `--idioma` **não** grava no registro | `--demo --idioma en` |
 | A11 | Xbox no cabo simulado: o overlay ganha **uma linha a mais** ("USB mode") | `--teste-xbox-usb` |
@@ -74,6 +77,8 @@ Só servem para testes, não para uso normal:
 - `--teste-rajada` simula o atalho apertado várias vezes seguidas e uma série de avisos.
 - `--teste-bateria-baixa` finge 5% de bateria e começa com o overlay oculto.
 - `--idioma pt|en` força o idioma só nesta execução (não salva).
+- `--rtss-modo desligado|tela-cheia|sempre` força o modo do RivaTuner só nesta execução. Os testes de janela usam `desligado`, para não falharem se houver um jogo em tela cheia exclusiva aberto.
+- `--rtss-mapa <nome>` usa outra memória compartilhada no lugar da do RivaTuner (RivaTuner simulado).
 - `--teste-xbox-usb` finge um controle Xbox ligado no cabo (linha "USB mode").
 - `--mudo` não toca nenhum som.
 - `--exportar-sons <pasta>` salva os efeitos sonoros como .wav e sai.
@@ -118,6 +123,7 @@ Rode os itens que tenham relação com o que foi alterado. Antes de publicar uma
 | M30 | Olhar o ícone da bandeja e depois trocar o Windows para o tema claro (Configurações > Personalização > Cores) | Controle com a barra na cor do nível do controle mais descarregado. Na troca de tema o controle muda de claro para escuro na hora. Sem controle: ícone apagado |
 | M31 | Ver o `GamepadBatteryOverlay.exe` no Explorer (ícones grandes e lista) e no Gerenciador de Tarefas | Aparece o ícone redondo do projeto, sem fundo preto nos cantos |
 | M32 | Com a v1.5 configurada (ex.: outro canto, inglês, Iniciar com o Windows marcado), abrir a v1.6 | Mesmo canto, mesmo idioma e "Iniciar com o Windows" continua marcado; a v1.5, se estava aberta, fecha sozinha |
+| M33 | RivaTuner aberto, jogo DX9/DX11 com "Desabilitar otimizações de tela inteira" marcado (ex.: RE Revelations), em tela cheia exclusiva | A linha `PS5 75%` (cores do nível) aparece **dentro do jogo**; desligar e ligar um controle mostra o aviso no jogo por ~5 s; o atalho (Mute / L3+R3) esconde e mostra. Sair do jogo: o overlay normal volta. Fechar o programa: o texto some do RivaTuner. Bandeja > RivaTuner > Desligado: nada aparece no jogo. ✅ v1.7: *Resident Evil Revelations* (DX9), otimizações desligadas, controle Xbox: bateria e avisos aparecem no jogo |
 
 ---
 
@@ -134,6 +140,7 @@ Rode os itens que tenham relação com o que foi alterado. Antes de publicar uma
 | 7 | 1.1 | **CPU em 3,3%** com o DS4 no USB e no Bluetooth ao mesmo tempo: cada pacote criava um evento do Windows e calculava o CRC (achado pela suíte). Agora ~1% | A5 |
 | 9 | 1.2 | **Controle cheio aparecia como 85%**: a escala supunha níveis de 0 a 10, mas na bateria os controles param no 8 (relatado pelo usuário, confirmado pelo byte `0x28` = completo + nível 8 e pelo DS4Windows, que mostra 100% com o mesmo DS4) | U1, U2, M21 |
 | 10 | 1.3 (dev) | A etiqueta **XBOX** (4 letras) encostava no ícone da bateria; agora usa uma fonte menor (achado na captura de tela do overlay) | M22, M24 |
+| 11 | 1.7 (dev) | Os testes de janela (A11, A12) falhavam com um jogo aberto em tela cheia exclusiva, porque o programa esconde a janela e passa para o RivaTuner (achado pela suíte com o *RE Revelations* aberto) | A11, A12 com `--rtss-modo desligado` |
 | 8 | 1.2 (dev) | O WAV gerado gravava **todas** as amostras, mesmo depois do corte do silêncio: o cabeçalho dizia um tamanho e o arquivo tinha outro (WAV malformado e sons com 2 a 3 s) | U7 |
 
 ### Como adicionar um bug novo

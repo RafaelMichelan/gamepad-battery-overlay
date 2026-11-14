@@ -2,7 +2,7 @@
 
 # Gamepad Battery Overlay
 
-![versão](https://img.shields.io/badge/vers%C3%A3o-1.6.1-blue)
+![versão](https://img.shields.io/badge/vers%C3%A3o-1.7-blue)
 ![plataforma](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6)
 ![licença](https://img.shields.io/badge/licen%C3%A7a-PolyForm%20Noncommercial-green)
 ![preço](https://img.shields.io/badge/pre%C3%A7o-gr%C3%A1tis-brightgreen)
@@ -13,7 +13,7 @@
 
 Overlay e notificações de bateria dos controles **DualSense (PS5)**, **DualShock 4 (PS4)** e **Xbox** para Windows, **sem programas de terceiros**: não usa DS4Windows, DSX nem Steam, e não precisa de instalação. A bateria é lida direto do controle com as APIs que já vêm no Windows.
 
-**Autor:** Rafael Gonçalez · **Versão:** 1.6.1
+**Autor:** Rafael Gonçalez · **Versão:** 1.7
 
 > 🆓 **Programa 100% gratuito. A venda é proibida.** O único lugar oficial para baixar é este GitHub. Se alguém te cobrou por ele, você foi enganado. A licença ([PolyForm Noncommercial 1.0.0](LICENSE)) permite usar, copiar, modificar e compartilhar de graça, mas proíbe vender ou usar comercialmente.
 >
@@ -47,6 +47,7 @@ Overlay e notificações de bateria dos controles **DualSense (PS5)**, **DualSho
 - **Detecção instantânea** de conexão e desconexão, usando o aviso de dispositivo do próprio Windows (`WM_DEVICECHANGE`).
 - **Controles Xbox**: no Bluetooth, a bateria vem da mesma informação que as Configurações do Windows mostram (lida a cada 30 s). No cabo USB o Windows não informa a bateria, então a linha mostra **"USB mode"** no lugar do ícone e da %.
 - **Regra para qualquer controle:** com informação de bateria mostra ícone e %; sem informação mostra o texto e **nunca** dispara o alerta de bateria baixa.
+- **Dentro do jogo pelo RivaTuner (opcional):** com o RivaTuner (RTSS) aberto, a bateria e os avisos aparecem dentro do jogo, igual ao overlay da Steam, inclusive em tela cheia exclusiva. O programa só envia o texto pelo canal oficial do RivaTuner (o mesmo do HWiNFO e do AIDA64) e não injeta nada no jogo. Padrão: só quando um jogo está em tela cheia exclusiva.
 - **Atalho no controle** para mostrar e ocultar o overlay: **Mute** no DualSense, **L3+R3** no DualShock 4 e no Xbox.
 - **Vários controles ao mesmo tempo.** O mesmo controle ligado por USB e Bluetooth ao mesmo tempo aparece uma vez só, porque o programa identifica cada controle pelo MAC.
 - **Português e inglês**: o idioma é escolhido no menu da bandeja (*Idioma / Language*) e troca na hora. Na primeira vez segue o idioma do Windows. Guia em inglês: [ReadMe.txt](ReadMe.txt).
@@ -94,6 +95,7 @@ São cerca de 40 testes: compilação sem avisos, lógica de decodificação, co
 │   ├── Toast.cs          notificações animadas (janela com alpha por pixel)
 │   ├── Lang.cs           idioma (português / inglês)
 │   ├── TrayIcon.cs       ícone da bandeja (controle + barra de bateria, pixel a pixel)
+│   ├── Rtss.cs           integração com o RivaTuner (texto dentro do jogo) e detecção de tela cheia exclusiva
 │   ├── Settings.cs       migração das configurações do nome antigo
 │   ├── Sounds.cs         efeitos sonoros sintetizados (notas tipo sino, WAV em memória)
 │   └── AssemblyInfo.cs   versão e autoria
@@ -135,13 +137,13 @@ São cerca de 40 testes: compilação sem avisos, lógica de decodificação, co
 - **Xbox (USB):** encontrado pelo XInput (`XInputGetCapabilitiesEx`, com VID/PID) quando o tipo de bateria é "com fio". O Xbox 360 virtual do ViGEm (PID `028E`) é ignorado.
 - O programa **só lê** os controles, com acesso compartilhado. Ele não manda comandos de LED, vibração ou gatilhos.
 
-## Limitações conhecidas (v1.6)
+## Limitações conhecidas (v1.7)
 
 - DualSense Edge, DS4 de 2ª geração, Xbox One S e Elite 2 estão implementados, mas ainda não foram testados.
 - **Xbox:** no cabo não há leitura de bateria ("USB mode"); no Bluetooth não há aviso de carregando/carga completa. Um Xbox 360 com fio de verdade usa o mesmo PID do virtual (`028E`) e fica de fora.
 - Os próprios controles informam a bateria só em **9 níveis** (de 12,5 em 12,5%).
 - A escala do DS4 **com cabo** (0 a 11) segue o DS4Windows e ainda não foi confirmada por medição.
-- **Tela cheia:** no Windows 10/11 o overlay aparece mesmo em tela cheia exclusiva, por causa das otimizações de tela inteira. ✅ Testado em tela cheia exclusiva no *Resident Evil 4 Remake* (DX12) e no *Resident Evil Revelations* (DX9). Pode não aparecer se essas otimizações estiverem desativadas para o jogo (Compatibilidade > "Desabilitar otimizações de tela inteira") ou em jogos muito antigos (DirectDraw, OpenGL antigo); nesses casos, use o modo borderless.
+- **Tela cheia exclusiva:** em jogos **DX12** o overlay sempre aparece (o Windows simula a tela cheia; ✅ *Resident Evil 4 Remake*, com as otimizações de tela inteira ligadas e desligadas). Em jogos **DX9/10/11** aparece com as otimizações de tela inteira ligadas (✅ *Resident Evil Revelations*, DX9). Com elas **desligadas**, o jogo toma a tela e nenhuma janela aparece por cima: nesse caso, com o **RivaTuner** aberto, a bateria aparece **dentro do jogo** (✅ testado no *Resident Evil Revelations*, DX9, com as otimizações desligadas); sem ele, use o modo borderless.
 - Mostra só no monitor principal. Testado em escala de 100%.
 - *Dica:* se o DualSense acende a luz de carga no USB do PC, mas a bateria não sobe e o overlay continua mostrando "via Bluetooth", o cabo provavelmente é só de carga ou tem mau contato nos fios de dados. Sem ser reconhecido, ele se limita a 0,1 A (norma USB). Use um cabo USB-C com dados.
 - **DS4Windows:** ✅ convive. Com o DS4Windows aberto, o overlay continua lendo o DualSense e o DS4, desde que a opção *"Hide DS4 Controller"* (modo exclusivo) esteja desligada. Com o **HidHide** escondendo o controle, ele fica invisível para este programa também. O DSX ainda não foi testado.

@@ -10,7 +10,7 @@ Toda vez que o código (`src/`), as ferramentas (`tools/`) ou o `compilar.bat` f
 2. Se algo der **FALHOU**: corrigir na hora e rodar a suíte inteira de novo, até dar 0 FALHOU. Não entregar com falha.
 3. Todo bug corrigido ganha um teste que pega o problema se ele voltar (na suíte ou no checklist manual) e uma linha no histórico de `docs/PROTOCOLO-DE-TESTES.md`.
 4. Funcionalidade nova ganha teste novo na suíte (ou item no checklist manual, se depender do controle na mão).
-5. Dizer ao usuário quais itens do checklist manual (M1–M32) ele precisa conferir por causa da mudança.
+5. Dizer ao usuário quais itens do checklist manual (M1–M33) ele precisa conferir por causa da mudança.
 6. Manter a versão igual em `src/AssemblyInfo.cs`, `Leia-me.txt`, `README.md`, `CHANGELOG.md` e `.github/ISSUE_TEMPLATE` (o teste D1 confere isso).
 
 Detalhes em `docs/PROTOCOLO-DE-TESTES.md`.

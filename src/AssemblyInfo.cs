@@ -8,14 +8,14 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("Rafael Gonçalez")]
 [assembly: AssemblyProduct("Gamepad Battery Overlay")]
 [assembly: AssemblyCopyright("Copyright © 2026 Rafael Gonçalez")]
-[assembly: AssemblyVersion("1.6.1.0")]
-[assembly: AssemblyFileVersion("1.6.1.0")]
-[assembly: AssemblyInformationalVersion("1.6.1")]
+[assembly: AssemblyVersion("1.7.0.0")]
+[assembly: AssemblyFileVersion("1.7.0.0")]
+[assembly: AssemblyInformationalVersion("1.7")]
 [assembly: ComVisible(false)]
 
 public static class AppInfo
 {
     public const string Name = "Gamepad Battery Overlay";
-    public const string Version = "1.6.1";
+    public const string Version = "1.7";
     public const string Author = "Rafael Gonçalez";
 }

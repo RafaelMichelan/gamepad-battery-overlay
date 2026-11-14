@@ -8,7 +8,7 @@ if not exist "%CSC%" (
   exit /b 1
 )
 taskkill /im GamepadBatteryOverlay.exe /f >nul 2>&1
-"%CSC%" /nologo /codepage:65001 /target:winexe /optimize+ /out:GamepadBatteryOverlay.exe /win32icon:assets\icone.ico /r:System.Windows.Forms.dll /r:System.Drawing.dll src\*.cs
+"%CSC%" /nologo /codepage:65001 /target:winexe /optimize+ /unsafe /out:GamepadBatteryOverlay.exe /win32icon:assets\icone.ico /r:System.Windows.Forms.dll /r:System.Drawing.dll src\*.cs
 if errorlevel 1 (
   echo.
   echo ERRO na compilacao.

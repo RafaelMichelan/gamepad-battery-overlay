@@ -57,7 +57,27 @@ Check 'C2' 'Versão gravada no .exe = AppInfo.Version' {
 # ---------------------------------------------------------------------------------------------
 Secao "2. Testes de unidade (lógica de leitura)"
 # ---------------------------------------------------------------------------------------------
-Add-Type -Path "$root\src\PadHid.cs", "$root\src\XboxPad.cs", "$root\src\Lang.cs"
+# Rtss.cs usa ponteiros (trava atômica do RivaTuner): compila com /unsafe, igual ao compilar.bat
+$cp = New-Object CodeDom.Compiler.CompilerParameters
+$cp.CompilerOptions = '/unsafe'; $cp.GenerateInMemory = $true; [void]$cp.ReferencedAssemblies.Add('System.dll'); [void]$cp.ReferencedAssemblies.Add('System.Core.dll')
+Add-Type -Path "$root\src\PadHid.cs", "$root\src\XboxPad.cs", "$root\src\Lang.cs", "$root\src\Rtss.cs" -CompilerParameters $cp
+
+# RivaTuner simulado: cria uma memória compartilhada no mesmo formato da do RTSS (8 espaços), sem tocar no RTSS de verdade
+$RTSS_ENTRY = 299520; $RTSS_ARR = 96
+function New-FakeRtss([string]$name, [int]$ver = 0x00020014) {
+    $mmf = [IO.MemoryMappedFiles.MemoryMappedFile]::CreateNew($name, $RTSS_ARR + 8 * $RTSS_ENTRY)
+    $acc = $mmf.CreateViewAccessor()
+    $acc.Write(0, [int]0x52545353); $acc.Write(4, [int]$ver); $acc.Write(20, [int]$RTSS_ENTRY); $acc.Write(24, [int]$RTSS_ARR); $acc.Write(28, [int]8)
+    return @($mmf, $acc)
+}
+function Get-RtssSlot($acc, [int]$i, [int]$off, [int]$len) {
+    $b = New-Object byte[] $len; [void]$acc.ReadArray($RTSS_ARR + $i * $RTSS_ENTRY + $off, $b, 0, $len)
+    $n = [Array]::IndexOf($b, [byte]0); if ($n -lt 0) { $n = $len }
+    [Text.Encoding]::Default.GetString($b, 0, $n)
+}
+function Set-RtssSlot($acc, [int]$i, [int]$off, [string]$s) {
+    $b = [Text.Encoding]::Default.GetBytes($s + [char]0); $acc.WriteArray($RTSS_ARR + $i * $RTSS_ENTRY + $off, $b, 0, $b.Length)
+}
 
 # casos: @(byte, decodifica?, % esperado, estado esperado)  — estado 0 descarregando, 1 carregando, 2 completo
 function Test-Decode($model, [bool]$legacy, $casos) {
@@ -242,6 +262,59 @@ Check 'T2' 'Ícone do .exe: assets\icone.ico válido (16 a 256 px) e embutido no
     $true
 }
 
+Check 'R1' 'RivaTuner: texto do jogo igual ao overlay (cores do nível, USB mode, aviso, vazio quando oculto)' {
+    $ps5 = New-Object BatteryState -Property @{ Ok = $true; Tag = 'PS5'; Percent = 75; Status = 0 }
+    $ps4 = New-Object BatteryState -Property @{ Ok = $true; Tag = 'PS4'; Percent = 45; Status = 1 }
+    $xb = New-Object BatteryState -Property @{ Ok = $true; Tag = 'XBOX'; NoBattery = $true; Bluetooth = $false }
+    $low = New-Object BatteryState -Property @{ Ok = $true; Tag = 'PS5'; Percent = 12; Status = 0 }
+    $l = New-Object 'System.Collections.Generic.List[BatteryState]'; $l.Add($ps5); $l.Add($ps4); $l.Add($xb)
+    $t = [RtssOsd]::Format($l, $null)
+    if ($t -ne 'PS5 <C=5AD26E>75%<C>   PS4 <C=50AAFF>45%+<C>   XBOX USB mode') { return "texto: '$t'" }
+    $l2 = New-Object 'System.Collections.Generic.List[BatteryState]'; $l2.Add($low)
+    $t2 = [RtssOsd]::Format($l2, 'Bateria muito baixa')
+    if ($t2 -ne "PS5 <C=F05046>12%<C>`nBateria muito baixa") { return "texto com aviso: '$t2'" }
+    $vazio = New-Object 'System.Collections.Generic.List[BatteryState]'
+    if ([RtssOsd]::Format($vazio, $null) -ne '') { return "sem linhas deveria ficar vazio (overlay oculto)" }
+    if ([RtssOsd]::Format($vazio, 'Overlay oculto') -ne 'Overlay oculto') { return "só o aviso deveria aparecer" }
+    $true
+}
+Check 'R2' 'RivaTuner simulado: pega um espaço livre, atualiza, respeita a trava "ocupado", não mexe no espaço dos outros e limpa ao sair' {
+    $name = 'GBO_TesteRTSS_' + [Guid]::NewGuid().ToString('N')
+    $mmf, $acc = New-FakeRtss $name
+    try {
+        Set-RtssSlot $acc 1 256 'OutroApp'; Set-RtssSlot $acc 1 512 'texto do outro'
+        $r = New-Object RtssOsd $name
+        if (-not $r.IsAvailable()) { return "não reconheceu o RivaTuner simulado" }
+        if (-not $r.Update('abc')) { return "Update falhou" }
+        if ((Get-RtssSlot $acc 2 256 256) -ne 'GamepadBatteryOverlay' -or (Get-RtssSlot $acc 2 512 4096) -ne 'abc') { return "não escreveu no primeiro espaço livre (2)" }
+        if ((Get-RtssSlot $acc 1 256 256) -ne 'OutroApp' -or (Get-RtssSlot $acc 1 512 4096) -ne 'texto do outro') { return "mexeu no espaço de outro programa" }
+        if ($acc.ReadInt32(32) -ne 1 -or $acc.ReadInt32(36) -ne 0) { return "contador de quadro=$($acc.ReadInt32(32)), trava=$($acc.ReadInt32(36)) (esperado 1 e 0)" }
+        [void]$r.Update('def')
+        if ((Get-RtssSlot $acc 2 512 4096) -ne 'def' -or (Get-RtssSlot $acc 3 256 256) -ne '') { return "não reaproveitou o mesmo espaço" }
+        $f = $acc.ReadInt32(32); [void]$r.UpdateIfChanged('def')
+        if ($acc.ReadInt32(32) -ne $f) { return "reescreveu sem o texto mudar" }
+        $acc.Write(36, [int]1)
+        if ($r.Update('ghi')) { return "escreveu com o RivaTuner ocupado" }
+        if ((Get-RtssSlot $acc 2 512 4096) -ne 'def') { return "o texto mudou com o RivaTuner ocupado" }
+        $acc.Write(36, [int]0)
+        $r.Release()
+        if ((Get-RtssSlot $acc 2 256 256) -ne '' -or (Get-RtssSlot $acc 2 512 4096) -ne '') { return "não limpou o espaço ao sair" }
+        if ((Get-RtssSlot $acc 1 256 256) -ne 'OutroApp') { return "a limpeza apagou o espaço de outro programa" }
+    }
+    finally { $acc.Dispose(); $mmf.Dispose() }
+    # RTSS antigo (antes da 2.7): escreve no campo curto szOSD
+    $name2 = 'GBO_TesteRTSS_' + [Guid]::NewGuid().ToString('N')
+    $mmf, $acc = New-FakeRtss $name2 0x00020005
+    try {
+        [void](New-Object RtssOsd $name2).Update('velho')
+        if ((Get-RtssSlot $acc 1 0 256) -ne 'velho') { return "RTSS antigo: não escreveu no campo szOSD" }
+    }
+    finally { $acc.Dispose(); $mmf.Dispose() }
+    $sem = New-Object RtssOsd ('GBO_NaoExiste_' + [Guid]::NewGuid().ToString('N'))
+    if ($sem.IsAvailable() -or $sem.Update('x')) { return "sem RivaTuner deveria só ignorar" }
+    $true
+}
+
 Add-Type -Path "$root\src\Settings.cs"
 Check 'G1' 'Nome novo (v1.6): configurações e "Iniciar com o Windows" migram do nome antigo, uma vez só' {
     $base = 'Software\GBO_TesteMigracao'; $hk = "HKCU:\$base"
@@ -377,7 +450,15 @@ $OVERLAY_W = 128; $TOAST_W = 380; $SH = 18
 
 function Stop-App { Get-Process GamepadBatteryOverlay -ErrorAction SilentlyContinue | Stop-Process -Force; Start-Sleep -Milliseconds 600 }
 # --mudo: os testes não tocam som no PC de quem está testando
-function Start-App([string[]]$a) { Stop-App; Start-Process $exe -ArgumentList (@('--mudo') + @($a | Where-Object { $_ })) -PassThru }
+# Os testes de janela rodam com o RivaTuner desligado: com um jogo em tela cheia exclusiva aberto, o programa
+# (corretamente) esconde a janela e mostra pelo RivaTuner, o que faria esses testes falharem sem motivo.
+# O RivaTuner tem os próprios testes (R1, R2, A15), que passam --rtss-modo explicitamente.
+function Start-App([string[]]$a) {
+    Stop-App
+    $a = @($a | Where-Object { $_ })
+    if ($a -notcontains '--rtss-modo') { $a += @('--rtss-modo', 'desligado') }
+    Start-Process $exe -ArgumentList (@('--mudo') + $a) -PassThru
+}
 function Wins($p) {
     foreach ($w in [TestWin]::Windows($p.Id)) {
         $kind = if ($w[3] -eq $OVERLAY_W) { 'overlay' } elseif ($w[3] -eq $TOAST_W) { 'toast' } else { 'outra' }
@@ -501,6 +582,21 @@ else {
             $true
         }
         finally { $mtx.ReleaseMutex(); $mtx.Dispose(); Start-Sleep -Milliseconds 300; Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue }
+    }
+
+    Check 'A15' 'Programa escreve a bateria no RivaTuner (simulado, modo "sempre") com o mesmo conteúdo do overlay' {
+        $name = 'GBO_TesteRTSS_' + [Guid]::NewGuid().ToString('N')
+        $mmf, $acc = New-FakeRtss $name
+        try {
+            $px = Start-App @('--rtss-mapa', $name, '--rtss-modo', 'sempre')
+            Start-Sleep -Milliseconds 4500
+            $dono = Get-RtssSlot $acc 1 256 256; $txt = Get-RtssSlot $acc 1 512 4096
+            if ($dono -ne 'GamepadBatteryOverlay') { return "o programa não ocupou um espaço no RivaTuner (dono='$dono')" }
+            if ($temControle -and $txt -notmatch '(PS5|PS4|XBOX)') { return "texto sem os controles conectados: '$txt'" }
+            if (-not $temControle -and $txt -ne '') { return "sem controle, o texto deveria ficar vazio: '$txt'" }
+            $true
+        }
+        finally { Stop-App; $acc.Dispose(); $mmf.Dispose() }
     }
 
     $p = Start-App @('--demo', '--idioma', 'en')

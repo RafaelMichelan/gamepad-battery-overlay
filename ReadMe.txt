@@ -1,9 +1,9 @@
 ﻿===============================================================================
-                       GAMEPAD BATTERY OVERLAY  -  v1.6.1
+                        GAMEPAD BATTERY OVERLAY  -  v1.7
 ===============================================================================
 
   Author ......: Rafael Gonçalez
-  Version .....: 1.6.1  (2026-11-14)
+  Version .....: 1.7  (2026-11-14)
   System ......: Windows 10 / 11
   Controllers .: DualSense (PS5), DualShock 4 (PS4) and Xbox
                  Bluetooth (tested) and USB
@@ -301,6 +301,23 @@
   - Test notifications
       Shows every kind of notification in sequence.
 
+  - RivaTuner (RTSS)
+      Shows the battery INSIDE the game, drawn by RivaTuner (it must be
+      running; it comes with MSI Afterburner). It's for games in exclusive
+      full screen, where no window can appear. The program only sends the
+      text through RivaTuner's official channel (the same one HWiNFO and
+      AIDA64 use): it doesn't inject anything into the game.
+        Off
+        Only in exclusive fullscreen games (default): while the game owns
+          the screen, the "PS5 75%   XBOX 77%" line and the notifications
+          show in the game and the overlay window is hidden; otherwise,
+          everything works as usual.
+        Always: shows in RivaTuner all the time (in windowed games it may
+          appear alongside the overlay).
+      It shows the same as the overlay (it follows the shortcut and the
+      below-10% alert) plus the latest notification for 5 seconds. When the
+      program closes, the text is removed from RivaTuner.
+
   - Start with Windows
       Makes the program open by itself when you turn on the PC.
       IMPORTANT: if you move the .exe to another folder, uncheck and check
@@ -363,7 +380,7 @@
       example.
 
 -------------------------------------------------------------------------------
- 11. KNOWN LIMITATIONS (version 1.6.1)
+ 11. KNOWN LIMITATIONS (version 1.7)
 -------------------------------------------------------------------------------
 
   - Xbox: there's no battery reading on a USB cable ("USB mode"). On
@@ -373,16 +390,22 @@
     Xbox 360 controller is also left out.
   - The DualSense Edge and the 2nd gen DS4 are implemented but haven't been
     tested yet.
-  - FULL SCREEN: on Windows 10/11 the overlay and notifications appear even
-    in "exclusive full screen", because Windows keeps composing the screen
-    ("fullscreen optimizations" feature).
-    Tested in exclusive full screen, it worked:
-      Resident Evil 4 Remake (DirectX 12)
-      Resident Evil Revelations (DirectX 9)
-    It may NOT appear if those optimizations are disabled for the game
-    (game .exe Properties > Compatibility > "Disable fullscreen
-    optimizations") or in very old games (DirectDraw, old OpenGL). In those
-    cases, use the game's "borderless window" mode.
+  - EXCLUSIVE FULL SCREEN:
+    * DirectX 12 games (e.g. Resident Evil 4 Remake): the overlay and
+      notifications ALWAYS appear, because with DX12 Windows itself emulates
+      exclusive full screen. Tested with fullscreen optimizations on and off.
+    * DirectX 9/10/11 games (e.g. Resident Evil Revelations, DX9): they
+      appear with "fullscreen optimizations" ON (the Windows default). With
+      them OFF (game .exe Properties > Compatibility > "Disable fullscreen
+      optimizations"), the game takes over the whole screen and no window
+      can appear on top, including this program's.
+      SOLUTION: if you use RivaTuner (RTSS, it comes with MSI Afterburner),
+      the battery shows INSIDE the game, like the Steam overlay (section 8,
+      "RivaTuner (RTSS)"). TESTED: Resident Evil Revelations (DX9) with the
+      optimizations off, the battery and notifications show in the game.
+      Without RivaTuner, use the game's "borderless
+      window" mode or keep the optimizations on. Notification sounds play
+      either way.
   - TIP (not a limitation of the program): if the DualSense lights up its
     charging light on the PC's USB port but the battery doesn't go up (and
     the overlay still says "via Bluetooth"), the cable is probably
@@ -456,6 +479,10 @@
  16. VERSION HISTORY
 -------------------------------------------------------------------------------
 
+  v1.7  - Optional RivaTuner (RTSS) integration: the battery shows inside
+          the game, even in exclusive full screen with fullscreen
+          optimizations disabled.
+
   v1.6.1 - New license: PolyForm Noncommercial 1.0.0. The program is free
            and selling it is prohibited (up to v1.6 it was MIT).
 
@@ -502,7 +529,7 @@
           tray icon and test tool.
 
 ===============================================================================
-  Gamepad Battery Overlay v1.6.1  —  © 2026 Rafael Gonçalez
+  Gamepad Battery Overlay v1.7  —  © 2026 Rafael Gonçalez
   Free. Selling it is prohibited (PolyForm Noncommercial 1.0.0 license).
   Made with vibe-coding.
   "PlayStation", "DualSense" and "DualShock" are trademarks of Sony

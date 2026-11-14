@@ -89,6 +89,8 @@ public class OverlayForm : Form
             forceLow = (int)k.GetValue("ForceLow", 1) == 1;
             PadHid.LegacyScale = (int)k.GetValue("BatteryScale", 0) == 1; // 0 = corrigida (0-8), 1 = antiga (0-10)
             Lang.Apply(langOverride ?? (k.GetValue("Language", "") as string)); // "pt", "en" ou vazio (= idioma do Windows)
+            rtssMode = rtssModeOverride >= 0 ? rtssModeOverride : (int)k.GetValue("Rtss", RtssFullscreenOnly); // 0 desligado, 1 só tela cheia exclusiva, 2 sempre
+            if (rtssMode < RtssOff || rtssMode > RtssAlways) rtssMode = RtssFullscreenOnly;
         }
 
         BuildTray();
@@ -98,6 +100,11 @@ public class OverlayForm : Form
         var topTimer = new System.Windows.Forms.Timer { Interval = 2000 };
         topTimer.Tick += (s, e) => { if (Visible) SetWindowPos(Handle, HWND_TOPMOST, 0, 0, 0, 0, 0x0013 /* NOSIZE|NOMOVE|NOACTIVATE */); };
         topTimer.Start();
+
+        rtss = new RtssOsd(rtssMappingOverride ?? RtssOsd.DefaultMapping);
+        var rtssTimer = new System.Windows.Forms.Timer { Interval = 1000 };
+        rtssTimer.Tick += (s, e) => RtssTick();
+        rtssTimer.Start();
 
         CreateHandle(); // precisa existir antes das threads usarem BeginInvoke
 
@@ -500,8 +507,74 @@ public class OverlayForm : Form
     void Toast(string glyph, Color accent, string title, string sub, int pct, bool charging, string group, Sfx sfx)
     {
         if (!notify) return;
-        Action a = () => { ToastWindow.ShowToast(glyph, accent, title, sub, pct, charging, corner, group); PlaySfx(sfx); };
+        Action a = () => { Card(glyph, accent, title, sub, pct, charging, group); PlaySfx(sfx); };
         if (queuedToasts != null) queuedToasts.Add(a); else a();
+    }
+
+    // Mostra um aviso: cartão na tela normalmente; dentro do jogo (pelo RivaTuner) quando um jogo está em
+    // tela cheia exclusiva, onde o cartão não apareceria.
+    void Card(string glyph, Color accent, string title, string sub, int pct, bool charging, string group)
+    {
+        if (rtssInGame)
+        {
+            rtssNotice = "<C=" + (accent.ToArgb() & 0xFFFFFF).ToString("X6") + ">" + title + "<C>" + (string.IsNullOrEmpty(sub) ? "" : "  " + sub);
+            rtssNoticeUntil = DateTime.UtcNow.AddSeconds(5);
+            RtssPush();
+            return;
+        }
+        ToastWindow.ShowToast(glyph, accent, title, sub, pct, charging, corner, group);
+    }
+
+    // =====================================================================================
+    //  RivaTuner (RTSS): mostra a bateria dentro do jogo, inclusive em tela cheia exclusiva
+    // =====================================================================================
+
+    const int RtssOff = 0, RtssFullscreenOnly = 1, RtssAlways = 2;
+    int rtssMode = RtssFullscreenOnly;
+    static string rtssMappingOverride;  // --rtss-mapa <nome>: usado pela suíte (RivaTuner simulado)
+    static int rtssModeOverride = -1;   // --rtss-modo desligado|tela-cheia|sempre: só nesta execução
+    RtssOsd rtss;
+    bool rtssWriting;      // nosso texto está no RTSS agora
+    bool rtssInGame;       // jogo em tela cheia exclusiva + RTSS mostrando: a janela do overlay fica escondida
+    string rtssNotice;
+    DateTime rtssNoticeUntil;
+    ToolStripMenuItem[] rtssItems;
+
+    // Roda 1x por segundo: vê se há jogo em tela cheia exclusiva e se o RTSS está aberto
+    void RtssTick()
+    {
+        bool exclusive = Fullscreen.D3DExclusive();
+        bool want = rtssMode == RtssAlways || (rtssMode == RtssFullscreenOnly && exclusive);
+        if (want) rtssWriting = rtss.UpdateIfChanged(RtssText());
+        else if (rtssWriting) { rtss.Release(); rtssWriting = false; }
+        bool inGame = rtssWriting && exclusive;
+        if (inGame != rtssInGame) { rtssInGame = inGame; UpdateVisuals(); }
+    }
+
+    string RtssText()
+    {
+        string notice = rtssNotice != null && DateTime.UtcNow < rtssNoticeUntil ? rtssNotice : null;
+        return RtssOsd.Format(lines, notice);
+    }
+
+    // Atualiza o texto na hora (sem esperar o próximo segundo) quando algo muda
+    void RtssPush()
+    {
+        if (rtssWriting) rtssWriting = rtss.UpdateIfChanged(RtssText());
+    }
+
+    void SetRtssMode(int mode)
+    {
+        rtssMode = mode;
+        Save("Rtss", mode);
+        for (int i = 0; i < rtssItems.Length; i++) rtssItems[i].Checked = i == mode;
+        RtssTick();
+    }
+
+    public void ReleaseRtss()
+    {
+        if (rtss != null) rtss.Release();
+        rtssWriting = false;
     }
 
     // Som da notificação (se a opção "Sons" estiver ligada e o programa não estiver em modo --mudo)
@@ -518,9 +591,9 @@ public class OverlayForm : Form
         UpdateVisuals();
         PlaySfx(userHidden ? Sfx.Hide : Sfx.Show);
         if (userHidden)
-            ToastWindow.ShowToast("", AccentGray, Lang.T("Overlay oculto", "Overlay hidden"), Lang.T("Mute (PS5) ou L3+R3 (PS4/Xbox) mostra de novo", "Mute (PS5) or L3+R3 (PS4/Xbox) shows it again"), -1, false, corner, "toggle");
+            Card("", AccentGray, Lang.T("Overlay oculto", "Overlay hidden"), Lang.T("Mute (PS5) ou L3+R3 (PS4/Xbox) mostra de novo", "Mute (PS5) or L3+R3 (PS4/Xbox) shows it again"), -1, false, "toggle");
         else
-            ToastWindow.ShowToast("", AccentBlue, Lang.T("Overlay visível", "Overlay visible"), current.Count + (current.Count == 1 ? Lang.T(" controle conectado", " controller connected") : Lang.T(" controles conectados", " controllers connected")), -1, false, corner, "toggle");
+            Card("", AccentBlue, Lang.T("Overlay visível", "Overlay visible"), current.Count + (current.Count == 1 ? Lang.T(" controle conectado", " controller connected") : Lang.T(" controles conectados", " controllers connected")), -1, false, "toggle");
     }
 
     // =====================================================================================
@@ -541,9 +614,11 @@ public class OverlayForm : Form
         lines = ls;
         ApplySize(Math.Max(1, ls.Count));
         allowShow = true;
-        if (ls.Count > 0 && !Visible) Show();
-        else if (ls.Count == 0 && Visible) Hide();
-        ToastWindow.OverlayHeight = ls.Count > 0 ? Height : 0;
+        bool showWindow = ls.Count > 0 && !rtssInGame; // em jogo com tela cheia exclusiva, quem mostra é o RivaTuner
+        if (showWindow && !Visible) Show();
+        else if (!showWindow && Visible) Hide();
+        ToastWindow.OverlayHeight = showWindow ? Height : 0;
+        RtssPush();
         Invalidate();
         UpdateTray();
     }
@@ -721,6 +796,24 @@ public class OverlayForm : Form
         menu.Items.Add(miBtn);
         menu.Items.Add(new ToolStripMenuItem(Lang.T("Testar notificações", "Test notifications"), null, (s, e) => DemoToasts()));
 
+        // RivaTuner: a bateria dentro do jogo, inclusive em tela cheia exclusiva (precisa do RTSS aberto)
+        var rt = new ToolStripMenuItem("RivaTuner (RTSS)");
+        var rtStatus = new ToolStripMenuItem("") { Enabled = false };
+        rtssItems = new[]
+        {
+            new ToolStripMenuItem(Lang.T("Desligado", "Off"), null, (s, e) => SetRtssMode(RtssOff)),
+            new ToolStripMenuItem(Lang.T("Só em jogos em tela cheia exclusiva (padrão)", "Only in exclusive fullscreen games (default)"), null, (s, e) => SetRtssMode(RtssFullscreenOnly)),
+            new ToolStripMenuItem(Lang.T("Sempre (pode aparecer junto com o overlay)", "Always (may show alongside the overlay)"), null, (s, e) => SetRtssMode(RtssAlways)),
+        };
+        for (int i = 0; i < rtssItems.Length; i++) rtssItems[i].Checked = i == rtssMode;
+        rt.DropDownItems.Add(rtStatus);
+        rt.DropDownItems.Add(new ToolStripSeparator());
+        rt.DropDownItems.AddRange(rtssItems);
+        rt.DropDownOpening += (s, e) => rtStatus.Text = rtss.IsAvailable()
+            ? Lang.T("RivaTuner aberto: a bateria aparece dentro do jogo", "RivaTuner running: battery shows inside the game")
+            : Lang.T("RivaTuner não encontrado (abra o RTSS para usar)", "RivaTuner not found (open RTSS to use this)");
+        menu.Items.Add(rt);
+
         miStartup = new ToolStripMenuItem(Lang.T("Iniciar com o Windows", "Start with Windows"), null, (s, e) => ToggleStartup()) { Checked = IsStartup() };
         menu.Items.Add(miStartup);
         menu.Items.Add(new ToolStripSeparator());
@@ -880,6 +973,11 @@ public class OverlayForm : Form
         simulateLow = Array.IndexOf(args, "--teste-bateria-baixa") >= 0;
         mute = Array.IndexOf(args, "--mudo") >= 0;
         fakeXboxUsb = Array.IndexOf(args, "--teste-xbox-usb") >= 0;
+        int ri = Array.IndexOf(args, "--rtss-mapa");  // --rtss-mapa <nome>: RivaTuner simulado (suíte de testes)
+        if (ri >= 0 && ri + 1 < args.Length) rtssMappingOverride = args[ri + 1];
+        int rm = Array.IndexOf(args, "--rtss-modo");  // --rtss-modo desligado|tela-cheia|sempre (não salva)
+        if (rm >= 0 && rm + 1 < args.Length)
+            rtssModeOverride = args[rm + 1] == "sempre" ? RtssAlways : args[rm + 1] == "desligado" ? RtssOff : RtssFullscreenOnly;
         int li = Array.IndexOf(args, "--idioma"); // --idioma pt|en: força o idioma só nesta execução (não salva)
         if (li >= 0 && li + 1 < args.Length) langOverride = args[li + 1].ToLowerInvariant();
         int exp = Array.IndexOf(args, "--exportar-sons");
@@ -915,6 +1013,7 @@ public class OverlayForm : Form
                 t.Start();
             }
             Application.Run(form);
+            form.ReleaseRtss(); // ao sair, tira o nosso texto do RivaTuner (não fica nada preso no jogo)
         }
     }
 }
