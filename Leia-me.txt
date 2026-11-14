@@ -1,0 +1,472 @@
+﻿===============================================================================
+                        GAMEPAD BATTERY OVERLAY  -  v1.6
+===============================================================================
+
+  Autor .......: Rafael Gonçalez
+  Versão ......: 1.6  (14/11/2026)
+  Sistema .....: Windows 10 / 11
+  Controles ...: DualSense (PS5), DualShock 4 (PS4) e Xbox
+                 Bluetooth (testado) e USB
+  Idiomas .....: português (Brasil) e inglês, escolhidos na bandeja
+
+  Este programa foi feito inteiramente com VIBE-CODING: todo o código foi
+  escrito em conversa com uma inteligência artificial (Claude, da Anthropic),
+  com as ideias, os testes e as decisões feitos por Rafael Gonçalez.
+
+  (English version: ReadMe.txt)
+
+  Até a v1.5 o programa se chamava "DualSense Battery Overlay". O nome mudou
+  porque agora ele funciona com controles de PS5, PS4 e Xbox.
+
+-------------------------------------------------------------------------------
+ ÍNDICE
+-------------------------------------------------------------------------------
+
+   1. O que é
+   2. Requisitos e controles compatíveis
+   3. Como abrir pela primeira vez
+   4. O overlay (a janelinha da bateria)
+   5. Alerta de bateria crítica (abaixo de 10%)
+   6. Notificações
+   7. Atalho no controle: mostrar/ocultar o overlay
+   8. Menu do ícone da bandeja
+   9. Ferramenta de teste (testar-bateria.ps1)
+  10. Limitações conhecidas
+  11. Como desinstalar
+  12. Próximos passos (planos para versões futuras)
+  13. Como relatar problemas
+  14. Compilar você mesmo
+  15. Histórico de versões
+
+-------------------------------------------------------------------------------
+ 1. O QUE É
+-------------------------------------------------------------------------------
+
+  Um programa pequeno que mostra na tela a porcentagem da bateria dos seus
+  controles de PlayStation e Xbox e avisa quando eles conectam, desconectam,
+  começam a carregar ou ficam com a bateria crítica.
+
+  Ele NÃO precisa de nenhum programa de terceiros (DS4Windows, DSX, Steam...)
+  nem de instalação: usa só o que já vem no Windows. A bateria é lida direto
+  do controle, pelo mesmo canal que o Windows usa para receber os botões.
+
+-------------------------------------------------------------------------------
+ 2. REQUISITOS E CONTROLES COMPATÍVEIS
+-------------------------------------------------------------------------------
+
+  - Windows 10 ou 11 (64 bits).
+  - .NET Framework 4.x — já vem instalado no Windows 10/11.
+
+  Controles:
+    DualSense (PS5) ...................... testado (Bluetooth e USB)
+    DualShock 4 1ª geração (CUH-ZCT1) .... testado (Bluetooth e USB)
+    DualShock 4 2ª geração (CUH-ZCT2) .... suportado, ainda não testado
+    DualSense Edge ....................... suportado, ainda não testado
+    Xbox Series X|S ...................... testado (Bluetooth)
+    Xbox One S / Elite 2 ................. suportado, ainda não testado
+    Xbox no cabo USB ..................... sem bateria: "USB mode" (seção 4)
+
+  Vários controles ao mesmo tempo: sim (um por linha no overlay).
+
+-------------------------------------------------------------------------------
+ 3. COMO ABRIR PELA PRIMEIRA VEZ
+-------------------------------------------------------------------------------
+
+  1) Conecte o controle no PC (Bluetooth ou cabo).
+  2) Dê dois cliques em  GamepadBatteryOverlay.exe.
+  3) Vai aparecer uma notificação "DualSense conectado" (ou "DualShock 4
+     conectado") e, no canto superior direito da tela, a bateria do controle.
+  4) Um ícone de controle com uma barrinha de bateria aparece na bandeja do
+     Windows (perto do relógio).
+     Se não aparecer, clique na setinha "^" da bandeja para ver os ícones
+     ocultos. Todas as opções ficam no clique direito desse ícone.
+
+  AVISO DO WINDOWS (SmartScreen):
+  O programa não tem assinatura digital paga, então o Windows pode mostrar
+  "O Windows protegeu o computador". Para abrir mesmo assim, clique em
+  "Mais informações" e depois em "Executar assim mesmo".
+  Se preferir não confiar no .exe pronto, compile você mesmo a partir do
+  código-fonte (seção 14). Leva poucos segundos.
+
+  IDIOMA: o programa abre em português se o Windows estiver em português e
+  em inglês nos outros casos. Para trocar: menu da bandeja >
+  "Idioma / Language" (seção 8).
+
+  O programa abre só uma vez: se você abrir de novo, nada acontece, porque
+  ele já está rodando na bandeja.
+
+-------------------------------------------------------------------------------
+ 4. O OVERLAY (A JANELINHA DA BATERIA)
+-------------------------------------------------------------------------------
+
+  Mostra uma linha por controle conectado, com o modelo, um ícone de bateria
+  e a porcentagem:
+
+        PS5  [■■■□ ]  65%
+        PS4  [■■□□ ]  45%
+        XBOX [■■■□ ]  77%
+
+  Os controles aparecem na ordem em que conectaram.
+  Se o mesmo controle estiver ligado por cabo e por Bluetooth ao mesmo tempo,
+  ele aparece uma vez só.
+
+  CONTROLE SEM INFORMAÇÃO DE BATERIA ("USB mode"): quando o controle não
+  informa a bateria, a linha mostra um texto no lugar do ícone e da
+  porcentagem:
+
+        XBOX       USB mode
+
+  É o caso do controle Xbox ligado no cabo USB: o Windows não informa a
+  bateria dele no cabo. Uma linha assim nunca dispara o alerta de bateria
+  baixa e não aparece no modo "Só mostrar com bateria baixa". Os outros
+  controles continuam mostrando a bateria normalmente.
+
+  XBOX NO BLUETOOTH: a bateria vem da mesma informação que a tela
+  "Bluetooth e dispositivos" das Configurações do Windows mostra, e é
+  atualizada a cada 30 segundos (o controle só atualiza esse valor de vez
+  em quando). Pode ficar 1 ou 2% diferente das Configurações por alguns
+  instantes. O Xbox não informa se está carregando.
+
+  Cores da barra:
+    Verde ........ acima de 50%
+    Amarelo ...... de 21% a 50%
+    Vermelho ..... 20% ou menos
+    Azul + raio .. carregando (cabo ligado)
+
+  Comportamento:
+  - Fica sempre por cima das outras janelas.
+  - O clique do mouse passa através dela: não atrapalha nada embaixo.
+  - Não aparece no Alt+Tab nem na barra de tarefas e não rouba o foco do jogo.
+  - A linha de um controle some quando ele desconecta e volta quando reconecta.
+  - A bateria é atualizada em tempo real (a mudança aparece em ~1 segundo).
+
+  SOBRE A PRECISÃO: os controles não informam uma porcentagem, e sim um
+  NÍVEL. Na bateria, o nível vai de 0 a 8 (8 = cheio). Cada nível vale
+  12,5%, por isso o overlay mostra 100, 87, 75, 62, 50, 37, 25, 12 e 0%.
+  Não existe leitura mais precisa que essa nos controles.
+
+  ESCALA DA BATERIA (corrigida na v1.2.1): até a v1.2 o programa supunha
+  que o nível ia até 10, igual ao DSX, e por isso um controle CHEIO
+  aparecia como 85% (e 80% no DSX). Medindo os controles, ficou claro que
+  na bateria eles param no nível 8. Confirmado com o DS4Windows, que também
+  mostra 100% com o mesmo controle. A escala antiga continua disponível:
+  menu da bandeja > "Escala da bateria" > "0 a 10 — antiga (igual ao DSX)".
+
+-------------------------------------------------------------------------------
+ 5. ALERTA DE BATERIA CRÍTICA (ABAIXO DE 10%)
+-------------------------------------------------------------------------------
+
+  Quando a bateria de um controle cai abaixo de 10% (e ele não está
+  carregando):
+
+  - a linha desse controle APARECE OBRIGATORIAMENTE na tela, mesmo que você
+    tenha ocultado o overlay (pelo menu ou pelo atalho do controle) ou que o
+    modo "Só mostrar com bateria baixa" esteja ligado;
+  - aparece uma notificação vermelha "Bateria muito baixa".
+
+  Quando você liga o cabo, o controle sai do estado crítico e o overlay volta
+  ao que você tinha escolhido.
+
+  Para desativar: menu da bandeja > desmarque
+  "Sempre mostrar com bateria abaixo de 10%".
+
+-------------------------------------------------------------------------------
+ 6. NOTIFICAÇÕES
+-------------------------------------------------------------------------------
+
+  Cartões animados que aparecem logo abaixo do overlay, ficam uns 4 segundos
+  e somem sozinhos. Se aparecerem várias ao mesmo tempo, elas se empilham
+  (até 4) e se reorganizam sozinhas quando uma sai. Avisos do mesmo tipo
+  (o atalho, ou o estado de um mesmo controle) se substituem em vez de
+  empilhar.
+  O clique também passa através delas. Todas dizem qual controle é.
+
+    Cor       Aviso                     Quando aparece
+    --------  ------------------------  ------------------------------------
+    Azul      (controle) conectado      o controle liga / conecta
+                                        (Xbox no cabo: "via USB · USB mode")
+    Vermelho  (controle) desconectado   o controle desliga / desconecta
+    Verde     Carregando                o cabo é ligado
+    Verde     Carga completa            a bateria enche com o cabo ligado
+    Laranja   Carregamento parado       o cabo é retirado
+    Vermelho  Bateria muito baixa       a bateria cai abaixo de 10%
+    Cinza     Overlay oculto            você usou o atalho (ver seção 7)
+    Azul      Overlay visível           você usou o atalho de novo
+
+  SONS: cada aviso tem um efeito sonoro curto e baixinho (menos de 1,3 s).
+  Os sons foram criados pelo próprio programa, por síntese: não há arquivos
+  de som e nada foi copiado de outros programas.
+    Conectado ........... duas notas subindo
+    Desconectado ........ duas notas descendo
+    Carregando .......... três notas rápidas subindo
+    Carga completa ...... acorde que se abre
+    Carregamento parado . duas notas curtas caindo
+    Bateria muito baixa . dois toques graves
+    Overlay oculto ...... "tic" descendo
+    Overlay visível ..... "tic" subindo
+  Para desligar: menu da bandeja > "Sons das notificações".
+  O volume segue o Mixer de Volume do Windows (o programa aparece lá).
+
+  Conectar e desconectar são detectados na mesma hora (o Windows avisa o
+  programa). Antes de avisar "desconectado", o programa espera 1,5 segundo
+  para confirmar, evitando avisos falsos.
+
+  Para ver os avisos sem mexer no controle: clique direito no ícone da
+  bandeja > "Testar notificações".
+
+-------------------------------------------------------------------------------
+ 7. ATALHO NO CONTROLE: MOSTRAR/OCULTAR O OVERLAY
+-------------------------------------------------------------------------------
+
+    DualSense (PS5) ....... botão MUTE (o botãozinho do microfone,
+                            abaixo do botão PS)
+    DualShock 4 (PS4) ..... L3 + R3 juntos (afundar os dois analógicos
+                            ao mesmo tempo)
+    Xbox .................. L3 + R3 juntos, igual ao DualShock 4
+                            (Bluetooth e cabo USB)
+
+    1 vez ....... oculta o overlay  (aviso cinza "Overlay oculto")
+    de novo ..... mostra de novo    (aviso azul "Overlay visível")
+
+  Segurar não fica alternando: só conta o momento do aperto.
+  Se algum jogo usar esses botões, desligue o atalho no menu da bandeja
+  ("Atalho no controle").
+  Lembrete: um controle com bateria abaixo de 10% aparece mesmo com o overlay
+  oculto (seção 5).
+
+-------------------------------------------------------------------------------
+ 8. MENU DO ÍCONE DA BANDEJA (clique direito)
+-------------------------------------------------------------------------------
+
+  O ícone é um controle com uma barrinha de bateria embaixo, que mostra o
+  controle MAIS DESCARREGADO: a barra enche conforme a % e muda de cor
+  (verde, amarelo, vermelho; azul carregando). Sem controle conectado, o
+  ícone fica apagado e com a barra vazia. O controle fica claro na barra de
+  tarefas escura e escuro na barra clara, e acompanha na hora quando você
+  troca o tema do Windows.
+  Passando o mouse por cima aparece a % exata de cada controle.
+
+  - Mostrar overlay
+      Liga/desliga o overlay (o mesmo que o atalho do controle).
+
+  - Só mostrar com bateria baixa (≤20%)
+      Cada controle só aparece quando a bateria dele cai para 20% ou menos
+      (e não está carregando).
+
+  - Sempre mostrar com bateria abaixo de 10%
+      Liga/desliga o alerta obrigatório da seção 5. Vem LIGADO.
+
+  - Escala da bateria
+      "0 a 8 — corrigida" (padrão): cheio = 100%.
+      "0 a 10 — antiga": o cálculo da v1.2 e anteriores, igual ao DSX
+      (um controle cheio aparece como 85%). Serve para voltar atrás, caso a
+      escala nova pareça errada em algum controle. A troca vale na hora.
+
+  - Posição
+      Escolhe o canto da tela: superior direito, superior esquerdo,
+      inferior direito ou inferior esquerdo. As notificações acompanham.
+
+  - Idioma / Language
+      Português (Brasil) ou English. Na primeira vez segue o idioma do
+      Windows. A troca vale na hora (menu, notificações e dica do ícone),
+      sem reiniciar, e fica salva. Este item fica escrito nos dois idiomas
+      para qualquer pessoa achar. A ferramenta de teste (seção 9) continua
+      só em português.
+
+  - Procurar controles agora
+      Força uma nova busca de controles (normalmente é automático).
+
+  - Notificações (conexão / carregamento)
+      Liga/desliga os avisos automáticos.
+
+  - Sons das notificações
+      Liga/desliga os efeitos sonoros dos avisos (seção 6). Ao ligar, toca
+      um "tic" de amostra.
+
+  - Atalho no controle (Mute no PS5 · L3+R3 no PS4 e Xbox)
+      Liga/desliga o atalho da seção 7.
+
+  - Testar notificações
+      Mostra todos os tipos de aviso em sequência.
+
+  - Iniciar com o Windows
+      Faz o programa abrir sozinho quando você liga o PC.
+      IMPORTANTE: se mudar o .exe de pasta, desmarque e marque de novo.
+
+  - Sair
+      Fecha o programa.
+
+  As escolhas ficam salvas e voltam na próxima vez que o programa abrir.
+
+-------------------------------------------------------------------------------
+ 9. FERRAMENTA DE TESTE  (tools\testar-bateria.ps1)
+-------------------------------------------------------------------------------
+
+  Um script para conferir se a leitura está correta. Abra o PowerShell na
+  pasta do programa e rode um destes comandos:
+
+    powershell -ExecutionPolicy Bypass -File tools\testar-bateria.ps1
+      VERIFICAR (padrão). Para CADA controle conectado, lê 500 pacotes e
+      confere:
+      - CRC32 (no Bluetooth, código de conferência que o controle manda em
+        cada pacote: prova que os dados chegaram sem erro);
+      - se o relógio interno do controle está andando (dados novos);
+      - se os analógicos parados ficam perto de 128 (posição dos bytes certa);
+      - se o byte da bateria está estável.
+      No final mostra "OK" em verde ou "Atenção" em amarelo.
+      Deixe os controles parados durante esse teste.
+
+    powershell -ExecutionPolicy Bypass -File tools\testar-bateria.ps1 -Modo AoVivo
+      AO VIVO. Mostra os dados em tempo real: analógicos, atalho (Mute ou
+      L3+R3) e bateria. Mexa nos analógicos (só eles mudam), aperte o atalho
+      (aparece SIM), ligue o cabo (o estado muda para "carregando").
+      Ctrl+C para sair.
+      Com mais de um controle, escolha qual com  -Controle PS4  ou  -Controle PS5
+
+    powershell -ExecutionPolicy Bypass -File tools\testar-bateria.ps1 -Modo Log
+      LOG. Grava a bateria de todos os controles a cada minuto num arquivo
+      log-bateria-*.csv dentro da pasta tools. Deixe rodando enquanto joga: o
+      nível deve cair de 1 em 1 em intervalos parecidos.
+      Use -IntervaloSeg 30 para gravar a cada 30 segundos, por exemplo.
+
+-------------------------------------------------------------------------------
+ 10. LIMITAÇÕES CONHECIDAS (versão 1.6)
+-------------------------------------------------------------------------------
+
+  - Xbox: no cabo USB não há leitura de bateria ("USB mode"). No Bluetooth
+    não há os avisos "Carregando" e "Carga completa". O controle Xbox 360
+    virtual do DS4Windows/DSX é ignorado (inclusive no atalho L3+R3);
+    por isso um Xbox 360 com fio de verdade também fica de fora.
+  - O DualSense Edge e o DS4 de 2ª geração estão
+    implementados, mas ainda não foram testados.
+  - TELA CHEIA: no Windows 10/11 o overlay e as notificações aparecem mesmo
+    em "tela cheia exclusiva", porque o Windows continua compondo a tela
+    (recurso "otimizações de tela inteira").
+    Testado em tela cheia exclusiva, funcionou:
+      Resident Evil 4 Remake (DirectX 12)
+      Resident Evil Revelations (DirectX 9)
+    Pode NÃO aparecer se as otimizações estiverem desativadas para o jogo
+    (Propriedades do .exe do jogo > Compatibilidade > "Desabilitar
+    otimizações de tela inteira") ou em jogos muito antigos (DirectDraw,
+    OpenGL antigo). Nesses casos, use o modo "janela sem bordas" do jogo.
+  - DICA (não é limitação do programa): se o DualSense acende a luz de
+    carregamento no USB do PC mas a bateria não sobe (e o overlay continua
+    "via Bluetooth"), o cabo provavelmente é só de carga ou está com mau
+    contato nos fios de dados. Sem ser reconhecido pelo PC, o DualSense
+    se limita a 0,1 A, como manda a norma USB. Use um cabo USB-C com dados.
+    Com a bateria cheia, 0,1 A é normal (ele só mantém a carga).
+  - Aparece só no monitor principal.
+  - Testado só com escala de tela em 100%. Em escalas maiores pode ficar
+    levemente borrado.
+  - DS4Windows: TESTADO, convive. Com o DS4Windows aberto o overlay continua
+    lendo os controles, desde que a opção "Hide DS4 Controller" (modo
+    exclusivo) esteja DESLIGADA no DS4Windows.
+  - DSX e HidHide: se o HidHide estiver escondendo o controle,
+    este programa também não consegue vê-lo. A convivência com esses
+    programas ainda não foi testada (ver seção 12).
+  - Por Bluetooth, para conseguir ler a bateria o programa pede ao controle o
+    "modo completo" de relatórios (o mesmo que a Steam e os jogos com suporte
+    ao controle fazem). Isso não muda nada no uso normal.
+
+-------------------------------------------------------------------------------
+ 11. COMO DESINSTALAR
+-------------------------------------------------------------------------------
+
+  1) Clique direito no ícone da bandeja e desmarque "Iniciar com o Windows"
+     (se estiver marcado). Depois clique em "Sair".
+  2) Apague a pasta do programa.
+  3) (Opcional) Para apagar as configurações salvas, abra o Editor do
+     Registro e apague a chave:
+        HKEY_CURRENT_USER\Software\GamepadBatteryOverlay
+     (se você usou a v1.5 ou anterior, apague também a chave antiga:
+        HKEY_CURRENT_USER\Software\DualSenseOverlay )
+
+  O programa não instala nada além disso.
+
+-------------------------------------------------------------------------------
+ 12. PRÓXIMOS PASSOS (planos para versões futuras)
+-------------------------------------------------------------------------------
+
+  [feito na v1.1] Suporte ao controle de PS4 (DualShock 4).
+  [feito na v1.3] Suporte a controles de Xbox (bateria no Bluetooth,
+                  "USB mode" no cabo, atalho L3+R3).
+  [feito na v1.4] Tradução para o inglês.
+  - Funcionar junto com programas de tradução de input, como DS4Windows e
+    DSX, sem interferir neles: o overlay vai continuar só LENDO o controle,
+    sem mandar comandos, e a ideia é ele continuar enxergando o controle mesmo
+    quando esses programas estiverem ativos.
+
+-------------------------------------------------------------------------------
+ 13. COMO RELATAR PROBLEMAS
+-------------------------------------------------------------------------------
+
+  Se algo não funcionar, abra uma "Issue" na página do projeto no GitHub e
+  informe:
+    - versão do programa e do Windows;
+    - modelo do controle e se estava em Bluetooth ou USB;
+    - se usa DS4Windows, DSX, Steam ou HidHide;
+    - o que aconteceu e o que você esperava;
+    - o resultado do  tools\testar-bateria.ps1  (modo Verificar).
+
+-------------------------------------------------------------------------------
+ 14. COMPILAR VOCÊ MESMO
+-------------------------------------------------------------------------------
+
+  Não precisa instalar o Visual Studio: o Windows já tem o compilador.
+  Dê dois cliques em  compilar.bat. Ele fecha o programa se estiver aberto e
+  gera um GamepadBatteryOverlay.exe novo a partir dos arquivos da pasta src.
+
+-------------------------------------------------------------------------------
+ 15. HISTÓRICO DE VERSÕES
+-------------------------------------------------------------------------------
+
+  v1.6  - Nome novo: Gamepad Battery Overlay (antes DualSense Battery
+          Overlay), já que o programa funciona com PS5, PS4 e Xbox.
+          O .exe agora é GamepadBatteryOverlay.exe.
+        - Quem atualiza não perde nada: as configurações e o "Iniciar com o
+          Windows" passam sozinhos para o nome novo, e a versão antiga, se
+          estiver aberta, é fechada para não mostrar tudo em dobro.
+          Pode apagar o DualSenseOverlay.exe antigo.
+
+  v1.5  - Ícone novo do programa (o .exe), feito a partir da arte do
+          projeto.
+        - Ícone novo na bandeja: um controle com uma barra de bateria que
+          enche conforme a % e acompanha o tema claro/escuro do Windows.
+
+  v1.4  - Tradução do programa inteiro para o inglês, com a opção
+          "Idioma / Language" no menu da bandeja.
+        - Guia em inglês (ReadMe.txt).
+
+  v1.3  - Suporte a controles Xbox (Series, One S, Elite 2): bateria pelo
+          Bluetooth, "USB mode" no cabo, atalho L3+R3.
+        - Regra nova: controle sem informação de bateria mostra o texto no
+          lugar da bateria e nunca dispara o alerta de bateria baixa.
+        - O Xbox 360 virtual do DS4Windows/DSX é ignorado.
+
+  v1.2.1 - Escala da bateria corrigida: na bateria os controles vão até o
+           nível 8, não 10. Agora um controle cheio mostra 100% (antes 85%).
+         - Opção na bandeja para voltar à escala antiga (igual ao DSX).
+
+  v1.2  - Efeitos sonoros sutis para cada notificação, gerados pelo
+          próprio programa, com opção para desligar na bandeja.
+        - Protocolo e suíte de testes automáticos.
+        - Uso de CPU menor com vários controles.
+
+  v1.1  - Suporte ao DualShock 4 (PS4), com atalho L3+R3.
+        - Vários controles ao mesmo tempo (uma linha por controle).
+        - Alerta obrigatório com bateria abaixo de 10%, que pode ser
+          desligado no menu da bandeja.
+        - Notificação "Bateria muito baixa".
+        - Notificações empilhadas e com o nome do controle.
+        - Bateria atualizada em tempo real.
+
+  v1.0  - Primeira versão: DualSense, overlay, notificações, botão Mute,
+          ícone na bandeja e ferramenta de teste.
+
+===============================================================================
+  Gamepad Battery Overlay v1.6  —  © 2026 Rafael Gonçalez
+  Feito com vibe-coding.
+  "PlayStation", "DualSense" e "DualShock" são marcas da Sony Interactive
+  Entertainment. "Xbox" é marca da Microsoft. Este projeto não tem ligação
+  com a Sony nem com a Microsoft.
+===============================================================================

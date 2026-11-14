@@ -1,0 +1,26 @@
+# Executável gerado (publicar em Releases, não no repositório)
+*.exe
+*.pdb
+
+# Logs da ferramenta de teste
+tools/log-bateria-*.csv
+*.csv
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Pacotes de release gerados localmente
+dist/
+
+# Resultado local da suíte de testes
+tools/testes/ultimo-resultado.txt
+
+# Prévia dos sons exportados (--exportar-sons)
+sons-preview/
+
+# Backups locais
+backups/
+
+# Revisões pessoais (arquivos .rar das versões antigas)
+Revisoes/
