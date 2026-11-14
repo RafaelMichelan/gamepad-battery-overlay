@@ -2,6 +2,13 @@
 
 Todas as mudanças importantes deste projeto ficam registradas aqui.
 
+## [1.6.1] - 2026-11-14
+
+### Alterado
+- **Licença nova: [PolyForm Noncommercial 1.0.0](LICENSE)** (até a v1.6 era MIT). O programa continua **100% gratuito**: pode ser usado, copiado, modificado e compartilhado de graça, para fins não comerciais. **Vender, cobrar pelo download ou usar comercialmente é proibido.**
+- Aviso "gratuito, venda proibida" em destaque no README, no Leia-me, no ReadMe e na página de download, com o endereço oficial no GitHub.
+- O programa em si não mudou.
+
 ## [1.6] - 2026-11-14
 
 ### Alterado

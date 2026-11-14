@@ -2,9 +2,10 @@
 
 # Gamepad Battery Overlay
 
-![versão](https://img.shields.io/badge/vers%C3%A3o-1.6-blue)
+![versão](https://img.shields.io/badge/vers%C3%A3o-1.6.1-blue)
 ![plataforma](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6)
-![licença](https://img.shields.io/badge/licen%C3%A7a-MIT-green)
+![licença](https://img.shields.io/badge/licen%C3%A7a-PolyForm%20Noncommercial-green)
+![preço](https://img.shields.io/badge/pre%C3%A7o-gr%C3%A1tis-brightgreen)
 ![feito com](https://img.shields.io/badge/feito%20com-vibe--coding-ff69b4)
 ![idiomas](https://img.shields.io/badge/idiomas-PT--BR%20%7C%20EN-orange)
 
@@ -12,7 +13,11 @@
 
 Overlay e notificações de bateria dos controles **DualSense (PS5)**, **DualShock 4 (PS4)** e **Xbox** para Windows, **sem programas de terceiros**: não usa DS4Windows, DSX nem Steam, e não precisa de instalação. A bateria é lida direto do controle com as APIs que já vêm no Windows.
 
-**Autor:** Rafael Gonçalez · **Versão:** 1.6
+**Autor:** Rafael Gonçalez · **Versão:** 1.6.1
+
+> 🆓 **Programa 100% gratuito. A venda é proibida.** O único lugar oficial para baixar é este GitHub. Se alguém te cobrou por ele, você foi enganado. A licença ([PolyForm Noncommercial 1.0.0](LICENSE)) permite usar, copiar, modificar e compartilhar de graça, mas proíbe vender ou usar comercialmente.
+>
+> 🇬🇧 *Free software. Selling it is prohibited. If someone charged you for it, you were scammed.*
 
 > Até a v1.5 o projeto se chamava **DualSense Battery Overlay**. Quem atualiza não perde as configurações: elas passam sozinhas para o nome novo.
 
@@ -160,6 +165,8 @@ Testes em máquinas e configurações diferentes ajudam muito. Abra uma **Issue*
 
 ## Licença
 
-[MIT](LICENSE) © 2026 Rafael Gonçalez
+**Gratuito, venda proibida.** © 2026 Rafael Gonçalez. Licença [PolyForm Noncommercial 1.0.0](LICENSE): você pode usar, copiar, modificar e compartilhar o programa de graça, para fins não comerciais. **Vender, cobrar pelo download ou usar comercialmente não é permitido.**
+
+Até a v1.6 o projeto estava na licença MIT; a partir da v1.6.1 vale a licença PolyForm Noncommercial.
 
 *PlayStation, DualSense e DualShock são marcas da Sony Interactive Entertainment. Xbox é marca da Microsoft. Este projeto não tem ligação com a Sony nem com a Microsoft.*

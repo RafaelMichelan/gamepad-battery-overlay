@@ -1,9 +1,9 @@
 ﻿===============================================================================
-                        GAMEPAD BATTERY OVERLAY  -  v1.6
+                       GAMEPAD BATTERY OVERLAY  -  v1.6.1
 ===============================================================================
 
   Autor .......: Rafael Gonçalez
-  Versão ......: 1.6  (14/11/2026)
+  Versão ......: 1.6.1  (14/11/2026)
   Sistema .....: Windows 10 / 11
   Controles ...: DualSense (PS5), DualShock 4 (PS4) e Xbox
                  Bluetooth (testado) e USB
@@ -14,6 +14,17 @@
   com as ideias, os testes e as decisões feitos por Rafael Gonçalez.
 
   (English version: ReadMe.txt)
+
+  +---------------------------------------------------------------------+
+  |  PROGRAMA GRATUITO - A VENDA É PROIBIDA                             |
+  |                                                                     |
+  |  O único lugar oficial para baixar é o GitHub:                      |
+  |  https://github.com/RafaelMichelan/gamepad-battery-overlay          |
+  |  Se alguém te cobrou por este programa, você foi enganado.          |
+  |  Licença PolyForm Noncommercial 1.0.0 (arquivo LICENSE): usar,      |
+  |  copiar, modificar e compartilhar de graça pode; vender, cobrar     |
+  |  pelo download ou usar comercialmente não pode.                     |
+  +---------------------------------------------------------------------+
 
   Até a v1.5 o programa se chamava "DualSense Battery Overlay". O nome mudou
   porque agora ele funciona com controles de PS5, PS4 e Xbox.
@@ -330,7 +341,7 @@
       Use -IntervaloSeg 30 para gravar a cada 30 segundos, por exemplo.
 
 -------------------------------------------------------------------------------
- 10. LIMITAÇÕES CONHECIDAS (versão 1.6)
+ 10. LIMITAÇÕES CONHECIDAS (versão 1.6.1)
 -------------------------------------------------------------------------------
 
   - Xbox: no cabo USB não há leitura de bateria ("USB mode"). No Bluetooth
@@ -420,6 +431,9 @@
  15. HISTÓRICO DE VERSÕES
 -------------------------------------------------------------------------------
 
+  v1.6.1 - Licença nova: PolyForm Noncommercial 1.0.0. O programa é
+           gratuito e a venda é proibida (até a v1.6 era MIT).
+
   v1.6  - Nome novo: Gamepad Battery Overlay (antes DualSense Battery
           Overlay), já que o programa funciona com PS5, PS4 e Xbox.
           O .exe agora é GamepadBatteryOverlay.exe.
@@ -464,7 +478,8 @@
           ícone na bandeja e ferramenta de teste.
 
 ===============================================================================
-  Gamepad Battery Overlay v1.6  —  © 2026 Rafael Gonçalez
+  Gamepad Battery Overlay v1.6.1  —  © 2026 Rafael Gonçalez
+  Gratuito. Venda proibida (licença PolyForm Noncommercial 1.0.0).
   Feito com vibe-coding.
   "PlayStation", "DualSense" e "DualShock" são marcas da Sony Interactive
   Entertainment. "Xbox" é marca da Microsoft. Este projeto não tem ligação
