@@ -1,8 +1,8 @@
-﻿<p align="center"><img src="assets/icone-256.png" width="160" alt="ícone"></p>
+<p align="center"><img src="assets/icone-256.png" width="160" alt="ícone"></p>
 
 # Gamepad Battery Overlay
 
-![versão](https://img.shields.io/badge/vers%C3%A3o-1.7-blue)
+![versão](https://img.shields.io/badge/vers%C3%A3o-1.7.1-blue)
 ![plataforma](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6)
 ![licença](https://img.shields.io/badge/licen%C3%A7a-PolyForm%20Noncommercial-green)
 ![preço](https://img.shields.io/badge/pre%C3%A7o-gr%C3%A1tis-brightgreen)
@@ -13,7 +13,7 @@
 
 Overlay e notificações de bateria dos controles **DualSense (PS5)**, **DualShock 4 (PS4)** e **Xbox** para Windows, **sem programas de terceiros**: não usa DS4Windows, DSX nem Steam, e não precisa de instalação. A bateria é lida direto do controle com as APIs que já vêm no Windows.
 
-**Autor:** Rafael Gonçalez · **Versão:** 1.7
+**Autor:** Rafael Gonçalez · **Versão:** 1.7.1
 
 > 🆓 **Programa 100% gratuito. A venda é proibida.** O único lugar oficial para baixar é este GitHub. Se alguém te cobrou por ele, você foi enganado. A licença ([PolyForm Noncommercial 1.0.0](LICENSE)) permite usar, copiar, modificar e compartilhar de graça, mas proíbe vender ou usar comercialmente.
 >
@@ -47,11 +47,11 @@ Overlay e notificações de bateria dos controles **DualSense (PS5)**, **DualSho
 - **Detecção instantânea** de conexão e desconexão, usando o aviso de dispositivo do próprio Windows (`WM_DEVICECHANGE`).
 - **Controles Xbox**: no Bluetooth, a bateria vem da mesma informação que as Configurações do Windows mostram (lida a cada 30 s). No cabo USB o Windows não informa a bateria, então a linha mostra **"USB mode"** no lugar do ícone e da %.
 - **Regra para qualquer controle:** com informação de bateria mostra ícone e %; sem informação mostra o texto e **nunca** dispara o alerta de bateria baixa.
-- **Dentro do jogo pelo RivaTuner (opcional):** com o RivaTuner (RTSS) aberto, a bateria e os avisos aparecem dentro do jogo, igual ao overlay da Steam, inclusive em tela cheia exclusiva. O programa só envia o texto pelo canal oficial do RivaTuner (o mesmo do HWiNFO e do AIDA64) e não injeta nada no jogo. Padrão: só quando um jogo está em tela cheia exclusiva.
+- **Dentro do jogo pelo RivaTuner (opcional):** com o RivaTuner (RTSS) aberto, a bateria e os avisos aparecem dentro do jogo, igual ao overlay da Steam, inclusive em tela cheia exclusiva. O programa só envia o texto pelo canal oficial do RivaTuner (o mesmo do HWiNFO e do AIDA64) e não injeta nada no jogo. Padrão: só quando o jogo esconde o overlay de verdade (posse exclusiva da tela); jogos em tela cheia em que o overlay aparece continuam com o overlay normal.
 - **Atalho no controle** para mostrar e ocultar o overlay: **Mute** no DualSense, **L3+R3** no DualShock 4 e no Xbox.
 - **Vários controles ao mesmo tempo.** O mesmo controle ligado por USB e Bluetooth ao mesmo tempo aparece uma vez só, porque o programa identifica cada controle pelo MAC.
 - **Português e inglês**: o idioma é escolhido no menu da bandeja (*Idioma / Language*) e troca na hora. Na primeira vez segue o idioma do Windows. Guia em inglês: [ReadMe.txt](ReadMe.txt).
-- **Ícone na bandeja** em forma de controle, com uma barra de bateria que enche conforme a % do controle mais descarregado (e muda de cor), acompanhando o tema claro/escuro do Windows, e um menu de opções: posição (4 cantos), mostrar só com bateria baixa, alerta abaixo de 10%, notificações, atalho do controle, testar notificações e iniciar com o Windows.
+- **Ícone na bandeja** em forma de controle, com uma barra de bateria que enche conforme a % do controle mais descarregado (e muda de cor), acompanhando o tema claro/escuro do Windows, e um menu de opções: posição (4 cantos), mostrar só com bateria baixa, alerta abaixo de 10%, notificações, atalho do controle, testar notificações e iniciar com o Windows (que se conserta sozinho se a inicialização sumir ou o .exe mudar de pasta, e avisa na tela quando abre com o Windows). O menu fica organizado em grupos: Overlay, Notificações, Controle, RivaTuner e Idioma.
 - **Ferramenta de diagnóstico** (`tools/testar-bateria.ps1`), que confere o CRC32 dos pacotes, mostra os dados ao vivo e grava log da descarga.
 - Consumo de CPU desprezível: a leitura fica bloqueada esperando o próximo pacote do controle.
 
@@ -137,7 +137,7 @@ São cerca de 40 testes: compilação sem avisos, lógica de decodificação, co
 - **Xbox (USB):** encontrado pelo XInput (`XInputGetCapabilitiesEx`, com VID/PID) quando o tipo de bateria é "com fio". O Xbox 360 virtual do ViGEm (PID `028E`) é ignorado.
 - O programa **só lê** os controles, com acesso compartilhado. Ele não manda comandos de LED, vibração ou gatilhos.
 
-## Limitações conhecidas (v1.7)
+## Limitações conhecidas (v1.7.1)
 
 - DualSense Edge, DS4 de 2ª geração, Xbox One S e Elite 2 estão implementados, mas ainda não foram testados.
 - **Xbox:** no cabo não há leitura de bateria ("USB mode"); no Bluetooth não há aviso de carregando/carga completa. Um Xbox 360 com fio de verdade usa o mesmo PID do virtual (`028E`) e fica de fora.

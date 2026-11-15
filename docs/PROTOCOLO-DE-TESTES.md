@@ -42,6 +42,9 @@ Para os testes de hardware, **deixe os controles ligados e parados**. Sem contro
 | X5 | Atalho do Xbox: L3+R3 **juntos** dispara; L3 ou R3 sozinhos **não** | botões sintéticos |
 | R1 | RivaTuner: texto igual ao overlay (`PS5 75%` com a cor do nível, `+` carregando, USB mode, aviso numa segunda linha, vazio com o overlay oculto) | casos fixos |
 | R2 | RivaTuner **simulado** (memória compartilhada falsa, o RTSS de verdade não é tocado): pega o primeiro espaço livre, não mexe no espaço de outro programa, reaproveita o mesmo espaço, não reescreve sem mudança, respeita a trava "ocupado", limpa ao sair, escreve no campo antigo em RTSS < 2.7 e ignora quando não há RivaTuner | memória simulada |
+| R3 | RivaTuner só quando o jogo **esconde** o overlay (posse exclusiva da tela): com as otimizações ligadas ou DX12, overlay normal; a janela só some com o RivaTuner mostrando | casos fixos |
+| S1 | Iniciar com o Windows (chaves de teste no registro): não cria sem querer, recria a entrada que sumiu, corrige caminho antigo, não mexe na entrada certa, respeita a desativação do Gerenciador de Tarefas, marcar reativa, desmarcar tira tudo | registro de teste |
+| S2 | Reconhece "aberto com o Windows" pela marca `--inicio-windows` **ou** por abrir até 3 min depois da área de trabalho (ou 5 min depois de o PC ligar); aberto à mão depois disso não conta | casos fixos |
 | G1 | Nome novo: as configurações e o "Iniciar com o Windows" migram do nome antigo, mantendo o tipo dos valores, uma vez só e sem sobrescrever | chaves de teste no registro |
 | U7 | Os 8 efeitos sonoros: WAV válido (cabeçalho bate com o conteúdo), de 0,1 a 1,5 s, pico entre -30 e -15 dBFS e sem estalo no fim | sons gerados |
 | H1 | Para cada controle conectado: MAC lido (12 dígitos hex) | controle real |
@@ -62,6 +65,8 @@ Para os testes de hardware, **deixe os controles ligados e parados**. Sem contro
 | A9 | Bateria abaixo de 10% aparece **mesmo com o overlay oculto** | `--teste-bateria-baixa` |
 | A10 | `--exportar-sons` gera os 8 arquivos .wav e sai | pasta temporária |
 | A15 | O programa aberto com `--rtss-modo sempre` escreve no RivaTuner simulado os controles conectados | `--rtss-mapa` |
+| A16 | Aberto com `--inicio-windows` (como o Windows abre): mostra o aviso "ativo" e anota "aberto pelo Windows" no registro de inicializações | `--inicio-windows` |
+| A17 | Com o overlay **oculto**, um DualSense simulado completa a carga e o aviso "Carga completa" aparece | `--teste-carga-completa` |
 | A14 | A versão antiga (`DualSenseOverlay.exe`) aberta junto é fechada pelo programa novo | processo antigo simulado |
 | A13 | Notificações em inglês rodam sem sobrepor, e o `--idioma` **não** grava no registro | `--demo --idioma en` |
 | A11 | Xbox no cabo simulado: o overlay ganha **uma linha a mais** ("USB mode") | `--teste-xbox-usb` |
@@ -78,6 +83,8 @@ Só servem para testes, não para uso normal:
 - `--teste-bateria-baixa` finge 5% de bateria e começa com o overlay oculto.
 - `--idioma pt|en` força o idioma só nesta execução (não salva).
 - `--rtss-modo desligado|tela-cheia|sempre` força o modo do RivaTuner só nesta execução. Os testes de janela usam `desligado`, para não falharem se houver um jogo em tela cheia exclusiva aberto.
+- `--teste-carga-completa` começa com o overlay oculto e finge um DualSense carregando que completa a carga 2 s depois.
+- `--inicio-windows` é a marca que a entrada de inicialização passa (o programa se considera aberto pelo Windows).
 - `--rtss-mapa <nome>` usa outra memória compartilhada no lugar da do RivaTuner (RivaTuner simulado).
 - `--teste-xbox-usb` finge um controle Xbox ligado no cabo (linha "USB mode").
 - `--mudo` não toca nenhum som.
@@ -105,7 +112,7 @@ Rode os itens que tenham relação com o que foi alterado. Antes de publicar uma
 | M12 | Bandeja: desligar **Notificações** e desligar e ligar o controle | Nenhum aviso aparece |
 | M13 | Bandeja: desligar **Atalho no controle** e apertar Mute ou L3+R3 | Nada acontece |
 | M14 | Bandeja: desligar **Sempre mostrar abaixo de 10%** e rodar `GamepadBatteryOverlay.exe --teste-bateria-baixa` | O overlay **não** aparece |
-| M15 | Bandeja: **Iniciar com o Windows** e reiniciar o PC | O programa abre sozinho |
+| M15 | Bandeja: **Iniciar com o Windows** marcado e reiniciar o PC (sem controle ligado) | Uns segundos depois de entrar no Windows aparece o aviso **"Gamepad Battery Overlay ativo"**, e o ícone está na bandeja. Em `%LOCALAPPDATA%\GamepadBatteryOverlay\inicializacoes.log` a última linha diz "aberto pelo Windows". ✅ v1.7.1: reiniciado sem controle, o aviso apareceu e o registro anotou "aberto pelo Windows" |
 | M16 | Comparar a bateria com o DSX ou a Steam | Mesmo nível (o DSX mostra o limite de baixo da faixa e o overlay mostra o meio, ex.: 60% × 65%) |
 | M17 | Rodar um jogo em janela sem bordas **e** em tela cheia exclusiva | O overlay e as notificações aparecem por cima do jogo e o jogo não perde o foco. ✅ v1.2: em tela cheia exclusiva, overlay visível no Resident Evil 4 Remake (DX12) e no Resident Evil Revelations (DX9) |
 | M18 | Bandeja: **Testar notificações**, ouvindo | Cada aviso tem seu som, curto e baixinho, sem estalos |
@@ -124,6 +131,8 @@ Rode os itens que tenham relação com o que foi alterado. Antes de publicar uma
 | M31 | Ver o `GamepadBatteryOverlay.exe` no Explorer (ícones grandes e lista) e no Gerenciador de Tarefas | Aparece o ícone redondo do projeto, sem fundo preto nos cantos |
 | M32 | Com a v1.5 configurada (ex.: outro canto, inglês, Iniciar com o Windows marcado), abrir a v1.6 | Mesmo canto, mesmo idioma e "Iniciar com o Windows" continua marcado; a v1.5, se estava aberta, fecha sozinha |
 | M33 | RivaTuner aberto, jogo DX9/DX11 com "Desabilitar otimizações de tela inteira" marcado (ex.: RE Revelations), em tela cheia exclusiva | A linha `PS5 75%` (cores do nível) aparece **dentro do jogo**; desligar e ligar um controle mostra o aviso no jogo por ~5 s; o atalho (Mute / L3+R3) esconde e mostra. Sair do jogo: o overlay normal volta. Fechar o programa: o texto some do RivaTuner. Bandeja > RivaTuner > Desligado: nada aparece no jogo. ✅ v1.7: *Resident Evil Revelations* (DX9), otimizações desligadas, controle Xbox: bateria e avisos aparecem no jogo |
+| M34 | RivaTuner aberto, jogo em tela cheia com as otimizações de tela inteira **ligadas** (ex.: RE Revelations sem marcar a opção) e um jogo DX12 (ex.: RE4 Remake) | Aparece o **overlay normal** (janela), não o texto do RivaTuner. ✅ v1.7.1: *RE Revelations* (DX9) com as otimizações ligadas mostrou o overlay normal; desligadas, o RivaTuner |
+| M35 | Abrir o menu da bandeja e passar por todos os grupos (Overlay, Notificações, Controle, RivaTuner, Idioma), em português e em inglês | Tudo no lugar, sem texto cortado; desmarcar "Aviso ao iniciar com o Windows" e reiniciar o PC: o programa abre sem o aviso |
 
 ---
 
@@ -141,6 +150,10 @@ Rode os itens que tenham relação com o que foi alterado. Antes de publicar uma
 | 9 | 1.2 | **Controle cheio aparecia como 85%**: a escala supunha níveis de 0 a 10, mas na bateria os controles param no 8 (relatado pelo usuário, confirmado pelo byte `0x28` = completo + nível 8 e pelo DS4Windows, que mostra 100% com o mesmo DS4) | U1, U2, M21 |
 | 10 | 1.3 (dev) | A etiqueta **XBOX** (4 letras) encostava no ícone da bateria; agora usa uma fonte menor (achado na captura de tela do overlay) | M22, M24 |
 | 11 | 1.7 (dev) | Os testes de janela (A11, A12) falhavam com um jogo aberto em tela cheia exclusiva, porque o programa esconde a janela e passa para o RivaTuner (achado pela suíte com o *RE Revelations* aberto) | A11, A12 com `--rtss-modo desligado` |
+| 12 | 1.7 | Com o RivaTuner aberto, **todo** jogo em tela cheia ia para o RivaTuner, inclusive com as otimizações ligadas (quando o overlay aparece). O "jogo em tela cheia" do Windows vale nos dois casos; medido no RE Revelations, só a posse exclusiva da tela separa (relatado pelo usuário) | R3, M34 |
+| 13 | 1.7.1 (dev) | O A12 falhava às vezes: olhava a altura num instante só e o DualSense no Bluetooth pode demorar alguns segundos para mandar a 1ª leitura depois que o programa anterior foi fechado (achado pela suíte) | A12 agora espera até 9 s e confere de novo 2 s depois |
+| 14 | 1.7 | "Iniciar com o Windows" parecia não funcionar: numa inicialização o programa abriu mas ficou invisível (sem controle, só no ícone da bandeja); em outras a entrada de inicialização tinha sumido (relatado pelo usuário, confirmado nos eventos 9705-9708 do Shell-Core) | S1, A16, M15 |
+| 15 | 1.7.1 (dev) | O aviso de "aberto com o Windows" não apareceu no boot: a entrada chegou sem a marca `--inicio-windows` (algo a reescreveu) e a gravação do registro de inicializações falhou calada (achado no teste real do usuário) | S2, M15 |
 | 8 | 1.2 (dev) | O WAV gerado gravava **todas** as amostras, mesmo depois do corte do silêncio: o cabeçalho dizia um tamanho e o arquivo tinha outro (WAV malformado e sons com 2 a 3 s) | U7 |
 
 ### Como adicionar um bug novo

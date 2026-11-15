@@ -192,15 +192,52 @@ public class RtssOsd
     static string Hex(int rgb) { return rgb.ToString("X6"); }
 }
 
-/// <summary>O Windows diz que um jogo Direct3D está em tela cheia exclusiva? (onde janelas não aparecem)</summary>
+/// <summary>
+/// Um jogo está tomando a tela de verdade (modo exclusivo), de um jeito que nenhuma janela consegue aparecer por cima?
+/// Medido no RE Revelations (DX9): com as "otimizações de tela inteira" LIGADAS o Windows informa "jogo em tela cheia"
+/// (QUNS = 3), mas a tela NÃO é exclusiva e o overlay aparece normalmente; com elas DESLIGADAS, a tela é exclusiva
+/// e o overlay some. Por isso a decisão usa D3DKMTCheckExclusiveOwnership, e não só o "jogo em tela cheia" (bug #12).
+/// </summary>
 public static class Fullscreen
 {
     [DllImport("shell32.dll")] static extern int SHQueryUserNotificationState(out int state);
+    [DllImport("gdi32.dll")] [return: MarshalAs(UnmanagedType.U1)] static extern bool D3DKMTCheckExclusiveOwnership();
     public const int QUNS_RUNNING_D3D_FULL_SCREEN = 3;
+    static bool noKmt;
 
-    public static bool D3DExclusive()
+    /// <summary>O Windows diz "jogo Direct3D em tela cheia" (vale também com as otimizações ligadas, quando o overlay aparece).</summary>
+    public static bool D3DFullscreen()
     {
         try { int s; return SHQueryUserNotificationState(out s) == 0 && s == QUNS_RUNNING_D3D_FULL_SCREEN; }
         catch { return false; }
+    }
+
+    /// <summary>Alguém tem a posse EXCLUSIVA da tela agora? Só aí o overlay em janela não aparece.</summary>
+    public static bool OverlayCannotShow()
+    {
+        if (!noKmt)
+        {
+            try { return D3DKMTCheckExclusiveOwnership(); }
+            catch (EntryPointNotFoundException) { noKmt = true; }
+            catch (DllNotFoundException) { noKmt = true; }
+        }
+        return D3DFullscreen(); // Windows sem essa função: usa o critério antigo
+    }
+}
+
+public static class RtssRules
+{
+    public const int Off = 0, OnlyWhenHidden = 1, Always = 2;
+
+    /// <summary>Escrever no RivaTuner? No modo padrão, só quando o jogo esconde o overlay (posse exclusiva da tela).</summary>
+    public static bool ShouldWrite(int mode, bool overlayCannotShow)
+    {
+        return mode == Always || (mode == OnlyWhenHidden && overlayCannotShow);
+    }
+
+    /// <summary>Esconder a janela do overlay (tudo vai para o RivaTuner)? Só quando o RivaTuner está mostrando e a janela não apareceria mesmo.</summary>
+    public static bool HideWindow(bool rtssWriting, bool overlayCannotShow)
+    {
+        return rtssWriting && overlayCannotShow;
     }
 }

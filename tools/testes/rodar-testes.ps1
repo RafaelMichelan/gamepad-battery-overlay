@@ -315,6 +315,21 @@ Check 'R2' 'RivaTuner simulado: pega um espaço livre, atualiza, respeita a trav
     $true
 }
 
+Check 'R3' 'RivaTuner só quando o jogo esconde o overlay (bug corrigido v1.7.1: ia para o RivaTuner com as otimizações ligadas)' {
+    # medido no RE Revelations: otimizações ligadas -> "jogo em tela cheia" mas SEM posse exclusiva (overlay aparece);
+    # desligadas -> posse exclusiva (overlay some). A decisão só pode depender da posse exclusiva.
+    $casos = @(
+        @(1, $false, $false, 'padrão, otimizações ligadas / DX12: overlay normal'),
+        @(1, $true, $true, 'padrão, posse exclusiva: RivaTuner'),
+        @(2, $false, $true, 'sempre: RivaTuner mesmo sem tela cheia'),
+        @(0, $true, $false, 'desligado: nunca'))
+    foreach ($c in $casos) { if ([RtssRules]::ShouldWrite($c[0], $c[1]) -ne $c[2]) { return "$($c[3]): esperado $($c[2])" } }
+    if ([RtssRules]::HideWindow($true, $false)) { return "escondeu a janela sem posse exclusiva (modo sempre em janela)" }
+    if ([RtssRules]::HideWindow($false, $true)) { return "escondeu a janela com o RivaTuner fechado (ficaria sem nada na tela)" }
+    if (-not [RtssRules]::HideWindow($true, $true)) { return "não escondeu a janela com o RivaTuner mostrando em tela exclusiva" }
+    $true
+}
+
 Add-Type -Path "$root\src\Settings.cs"
 Check 'G1' 'Nome novo (v1.6): configurações e "Iniciar com o Windows" migram do nome antigo, uma vez só' {
     $base = 'Software\GBO_TesteMigracao'; $hk = "HKCU:\$base"
@@ -340,6 +355,47 @@ Check 'G1' 'Nome novo (v1.6): configurações e "Iniciar com o Windows" migram d
         $true
     }
     finally { Remove-Item $hk -Recurse -Force -ErrorAction SilentlyContinue }
+}
+
+Check 'S1' 'Iniciar com o Windows: recria a entrada que sumiu, corrige o caminho, respeita o Gerenciador de Tarefas (bug corrigido v1.7.1)' {
+    $base = 'Software\GBO_TesteInicio'; $hk = "HKCU:\$base"; $run = "$base\Run"; $apr = "$base\Approved"
+    $exeA = 'C:\Jogos\GamepadBatteryOverlay.exe'; $cmdA = [StartupEntry]::Command($exeA)
+    try {
+        Remove-Item $hk -Recurse -Force -ErrorAction SilentlyContinue
+        if ($cmdA -ne '"C:\Jogos\GamepadBatteryOverlay.exe" --inicio-windows') { return "comando: $cmdA" }
+        if ([StartupEntry]::Heal($run, $apr, 'GBO', $exeA, $false) -ne 'desligada' -or $null -ne [StartupEntry]::Current($run, 'GBO')) { return "criou a entrada sem o usuário querer" }
+        if ([StartupEntry]::Heal($run, $apr, 'GBO', $exeA, $true) -ne 'recriada') { return "não recriou a entrada que sumiu" }
+        if ([StartupEntry]::Current($run, 'GBO') -ne $cmdA) { return "entrada recriada errada: $([StartupEntry]::Current($run, 'GBO'))" }
+        if ([StartupEntry]::Heal($run, $apr, 'GBO', $exeA, $true) -ne 'ok') { return "mexeu numa entrada que já estava certa" }
+        Set-ItemProperty "$hk\Run" -Name GBO -Value '"D:\pasta antiga\GamepadBatteryOverlay.exe"'
+        if ([StartupEntry]::Heal($run, $apr, 'GBO', $exeA, $true) -ne 'corrigida' -or [StartupEntry]::Current($run, 'GBO') -ne $cmdA) { return "não corrigiu o caminho antigo" }
+        if (-not [StartupEntry]::IsActive($run, $apr, 'GBO', $exeA)) { return "entrada certa não contou como ativa" }
+        # desativado no Gerenciador de Tarefas (03): o autoconserto não reativa
+        New-Item "$hk\Approved" -Force | Out-Null
+        New-ItemProperty "$hk\Approved" -Name GBO -PropertyType Binary -Value ([byte[]](3,0,0,0,0,0,0,0,0,0,0,0)) | Out-Null
+        if ([StartupEntry]::Heal($run, $apr, 'GBO', $exeA, $true) -ne 'desativada') { return "não percebeu a desativação no Gerenciador de Tarefas" }
+        if ((Get-ItemProperty "$hk\Approved").GBO[0] -ne 3) { return "o autoconserto reativou o que o usuário desativou no Gerenciador de Tarefas" }
+        if ([StartupEntry]::IsActive($run, $apr, 'GBO', $exeA)) { return "desativado no Gerenciador contou como ativo" }
+        # marcar na bandeja (Enable) reativa
+        [StartupEntry]::Enable($run, $apr, 'GBO', $exeA)
+        if ((Get-ItemProperty "$hk\Approved").GBO[0] -ne 2 -or -not [StartupEntry]::IsActive($run, $apr, 'GBO', $exeA)) { return "marcar na bandeja não reativou" }
+        [StartupEntry]::Disable($run, $apr, 'GBO')
+        if ($null -ne [StartupEntry]::Current($run, 'GBO') -or $null -ne (Get-ItemProperty "$hk\Approved").GBO) { return "desmarcar não tirou a entrada" }
+        $true
+    }
+    finally { Remove-Item $hk -Recurse -Force -ErrorAction SilentlyContinue }
+}
+
+Check 'S2' 'Aberto com o Windows: reconhece pela marca OU por abrir logo depois de entrar no Windows (bug corrigido v1.7.1: aviso sumiu sem a marca)' {
+    $casos = @(
+        @($true, 9999, 99999, $true, 'com a marca'),
+        @($false, 30, 99999, $true, 'sem a marca, 30 s depois da área de trabalho abrir (o caso do teste real)'),
+        @($false, 179, 99999, $true, 'sem a marca, 3 min depois da área de trabalho'),
+        @($false, 600, 120, $true, 'sem a marca, PC ligado há 2 min'),
+        @($false, 600, 99999, $false, 'aberto à mão, bem depois'),
+        @($false, -1, 99999, $false, 'sem saber da área de trabalho, PC ligado há muito tempo'))
+    foreach ($c in $casos) { if ([LogonStart]::Decide($c[0], $c[1], $c[2]) -ne $c[3]) { return "$($c[4]): esperado $($c[3])" } }
+    $true
 }
 
 Add-Type -Path "$root\src\Sounds.cs"
@@ -599,6 +655,28 @@ else {
         finally { Stop-App; $acc.Dispose(); $mmf.Dispose() }
     }
 
+    Check 'A16' 'Aberto pelo Windows (--inicio-windows): avisa que está ativo e anota no registro de inicializações' {
+        $log = Join-Path $env:LOCALAPPDATA 'GamepadBatteryOverlay\inicializacoes.log'
+        $antes = if (Test-Path $log) { @(Get-Content $log).Count } else { 0 }
+        $px = Start-App @('--inicio-windows')
+        $r = Watch-Overlap $px 7; if ($r -is [string]) { return $r }
+        if ($notifyOn -and $r.MaxToasts -lt 1) { return "o aviso de que o programa abriu com o Windows não apareceu" }
+        $ult = @(Get-Content $log) | Select-Object -Last 1
+        if ($ult -notmatch 'aberto pelo Windows') { return "registro de inicializações não anotou: '$ult'" }
+        $true
+    }
+
+    Check 'A17' 'Aviso de "Carga completa" aparece mesmo com o overlay oculto' {
+        if (-not $notifyOn) { return 'PULADO: notificações desligadas na bandeja' }
+        $px = Start-App @('--teste-carga-completa')
+        # o DualSense simulado conecta (carregando) em ~1,5 s e completa a carga em ~3,5 s; o aviso "conectado" é
+        # substituído pelo "Carga completa" (mesmo grupo) e dura uns 4 s: aos 6,5 s o cartão na tela só pode ser ele
+        Start-Sleep -Milliseconds 6500
+        $t = @(Wins $px | Where-Object Kind -eq 'toast')
+        if ($t.Count -lt 1) { return "nenhum aviso na tela depois de completar a carga" }
+        $true
+    }
+
     $p = Start-App @('--demo', '--idioma', 'en')
     Check 'A13' 'Notificações em inglês (--idioma en): rodam sem sobrepor e sem salvar o idioma' {
         $antes = (Get-ItemProperty 'HKCU:\Software\GamepadBatteryOverlay' -ErrorAction SilentlyContinue).Language
@@ -621,10 +699,20 @@ else {
     $p = Start-App @('--teste-xbox-usb', '--teste-bateria-baixa')
     Check 'A12' 'Xbox no cabo (sem bateria) não entra no alerta obrigatório de bateria baixa' {
         if ($null -eq $script:alturaA9) { return 'PULADO: o A9 não rodou' }
-        Start-Sleep -Milliseconds 3500
-        $o = Wait-Overlay $p 3000
-        $h = if ($o) { $o.Ht } else { 0 }
+        # Espera os controles entrarem (o DualSense no Bluetooth às vezes demora alguns segundos para mandar a 1ª
+        # leitura depois que o programa anterior foi fechado) e confere a altura até 9 s, sem depender de um instante só.
+        # Depois de bater a altura esperada, confere de novo 2 s depois: o Xbox simulado (sem bateria) não pode aparecer.
+        Start-Sleep -Milliseconds 2500
+        $sw = [Diagnostics.Stopwatch]::StartNew(); $h = -1
+        while ($sw.ElapsedMilliseconds -lt 9000) {
+            $o = @(Wins $p | Where-Object Kind -eq 'overlay'); $h = if ($o.Count) { $o[0].Ht } else { 0 }
+            if ($h -eq $script:alturaA9) { break }
+            Start-Sleep -Milliseconds 200
+        }
         if ($h -ne $script:alturaA9) { return "altura $h, esperado $($script:alturaA9) (igual ao A9: o USB mode não pode ser forçado)" }
+        Start-Sleep -Milliseconds 2000
+        $o = @(Wins $p | Where-Object Kind -eq 'overlay'); $h = if ($o.Count) { $o[0].Ht } else { 0 }
+        if ($h -ne $script:alturaA9) { return "depois de 2 s a altura virou $h (esperado $($script:alturaA9)): o USB mode entrou no alerta?" }
         $true
     }
     Stop-App

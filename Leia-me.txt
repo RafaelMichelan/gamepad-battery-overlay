@@ -1,9 +1,9 @@
 ﻿===============================================================================
-                        GAMEPAD BATTERY OVERLAY  -  v1.7
+                       GAMEPAD BATTERY OVERLAY  -  v1.7.1
 ===============================================================================
 
   Autor .......: Rafael Gonçalez
-  Versão ......: 1.7  (14/11/2026)
+  Versão ......: 1.7.1  (15/11/2026)
   Sistema .....: Windows 10 / 11
   Controles ...: DualSense (PS5), DualShock 4 (PS4) e Xbox
                  Bluetooth (testado) e USB
@@ -161,7 +161,7 @@
   aparecia como 85% (e 80% no DSX). Medindo os controles, ficou claro que
   na bateria eles param no nível 8. Confirmado com o DS4Windows, que também
   mostra 100% com o mesmo controle. A escala antiga continua disponível:
-  menu da bandeja > "Escala da bateria" > "0 a 10 — antiga (igual ao DSX)".
+  menu da bandeja > Overlay > "Escala da bateria" > "0 a 10 — antiga".
 
 -------------------------------------------------------------------------------
  5. ALERTA DE BATERIA CRÍTICA (ABAIXO DE 10%)
@@ -178,7 +178,7 @@
   Quando você liga o cabo, o controle sai do estado crítico e o overlay volta
   ao que você tinha escolhido.
 
-  Para desativar: menu da bandeja > desmarque
+  Para desativar: menu da bandeja > Overlay > desmarque
   "Sempre mostrar com bateria abaixo de 10%".
 
 -------------------------------------------------------------------------------
@@ -215,7 +215,7 @@
     Bateria muito baixa . dois toques graves
     Overlay oculto ...... "tic" descendo
     Overlay visível ..... "tic" subindo
-  Para desligar: menu da bandeja > "Sons das notificações".
+  Para desligar: menu da bandeja > Notificações > "Sons das notificações".
   O volume segue o Mixer de Volume do Windows (o programa aparece lá).
 
   Conectar e desconectar são detectados na mesma hora (o Windows avisa o
@@ -223,7 +223,7 @@
   para confirmar, evitando avisos falsos.
 
   Para ver os avisos sem mexer no controle: clique direito no ícone da
-  bandeja > "Testar notificações".
+  bandeja > Notificações > "Testar notificações".
 
 -------------------------------------------------------------------------------
  7. ATALHO NO CONTROLE: MOSTRAR/OCULTAR O OVERLAY
@@ -257,25 +257,78 @@
   troca o tema do Windows.
   Passando o mouse por cima aparece a % exata de cada controle.
 
-  - Mostrar overlay
-      Liga/desliga o overlay (o mesmo que o atalho do controle).
+  O menu é organizado assim (o que mais se usa fica no topo):
 
+    Mostrar overlay
+    Overlay  >        Só mostrar com bateria baixa / Sempre mostrar abaixo
+                      de 10% / Posição na tela / Escala da bateria
+    Notificações  >   Mostrar notificações / Sons / Aviso ao iniciar com o
+                      Windows / Testar notificações
+    Controle  >       Atalho no controle / Procurar controles agora
+    RivaTuner (RTSS)  >
+    Idioma / Language  >
+    Iniciar com o Windows
+    Sair
+
+  - Mostrar overlay
+      Liga/desliga o overlay (o mesmo que o atalho do controle). Os avisos
+      continuam aparecendo com o overlay oculto, inclusive o de "Carga
+      completa".
+
+  OVERLAY
   - Só mostrar com bateria baixa (≤20%)
       Cada controle só aparece quando a bateria dele cai para 20% ou menos
       (e não está carregando).
-
   - Sempre mostrar com bateria abaixo de 10%
       Liga/desliga o alerta obrigatório da seção 5. Vem LIGADO.
-
+  - Posição na tela
+      Escolhe o canto da tela: superior direito, superior esquerdo,
+      inferior direito ou inferior esquerdo. As notificações acompanham.
   - Escala da bateria
       "0 a 8 — corrigida" (padrão): cheio = 100%.
       "0 a 10 — antiga": o cálculo da v1.2 e anteriores, igual ao DSX
       (um controle cheio aparece como 85%). Serve para voltar atrás, caso a
       escala nova pareça errada em algum controle. A troca vale na hora.
 
-  - Posição
-      Escolhe o canto da tela: superior direito, superior esquerdo,
-      inferior direito ou inferior esquerdo. As notificações acompanham.
+  NOTIFICAÇÕES
+  - Mostrar notificações (conexão, carga, bateria baixa)
+      Liga/desliga todos os avisos automáticos (seção 6).
+  - Sons das notificações
+      Liga/desliga os efeitos sonoros dos avisos. Ao ligar, toca um "tic"
+      de amostra.
+  - Aviso ao iniciar com o Windows
+      Quando o programa abre junto com o Windows, mostra "Gamepad Battery
+      Overlay ativo" uns 8 segundos depois de a área de trabalho aparecer
+      (sem controle conectado o programa fica só no ícone da bandeja, por
+      isso o aviso). Vem LIGADO. Desmarque se não quiser o aviso.
+  - Testar notificações
+      Mostra todos os tipos de aviso em sequência.
+
+  CONTROLE
+  - Atalho no controle (Mute no PS5 · L3+R3 no PS4 e Xbox)
+      Liga/desliga o atalho da seção 7.
+  - Procurar controles agora
+      Força uma nova busca de controles (normalmente é automático).
+
+  - RivaTuner (RTSS)
+      Mostra a bateria DENTRO do jogo, desenhada pelo RivaTuner (precisa
+      dele aberto; ele vem junto com o MSI Afterburner). Serve para jogos em
+      tela cheia exclusiva, onde nenhuma janela aparece. O programa só manda
+      o texto pelo canal oficial do RivaTuner (o mesmo do HWiNFO e do
+      AIDA64): não injeta nada no jogo. O submenu mostra se o RivaTuner está
+      aberto.
+        Desligado
+        Só quando o jogo esconde o overlay (padrão): só quando o jogo toma a
+          tela de verdade (modo exclusivo, onde a janela não apareceria) a
+          linha "PS5 75%   XBOX 77%" e os avisos vão para o jogo e a janela do
+          overlay fica escondida. Jogo em tela cheia em que o overlay aparece
+          (otimizações de tela inteira ligadas, ou DX12) continua com o
+          overlay normal, mesmo com o RivaTuner aberto.
+        Sempre: mostra no RivaTuner o tempo todo (em jogos com janela pode
+          aparecer junto com o overlay).
+      Mostra o mesmo que o overlay (respeita o atalho e o alerta abaixo de
+      10%) e o último aviso por 5 segundos. Ao fechar o programa, o texto
+      sai do RivaTuner.
 
   - Idioma / Language
       Português (Brasil) ou English. Na primeira vez segue o idioma do
@@ -284,41 +337,17 @@
       para qualquer pessoa achar. A ferramenta de teste (seção 9) continua
       só em português.
 
-  - Procurar controles agora
-      Força uma nova busca de controles (normalmente é automático).
-
-  - Notificações (conexão / carregamento)
-      Liga/desliga os avisos automáticos.
-
-  - Sons das notificações
-      Liga/desliga os efeitos sonoros dos avisos (seção 6). Ao ligar, toca
-      um "tic" de amostra.
-
-  - Atalho no controle (Mute no PS5 · L3+R3 no PS4 e Xbox)
-      Liga/desliga o atalho da seção 7.
-
-  - Testar notificações
-      Mostra todos os tipos de aviso em sequência.
-
-  - RivaTuner (RTSS)
-      Mostra a bateria DENTRO do jogo, desenhada pelo RivaTuner (precisa
-      dele aberto; ele vem junto com o MSI Afterburner). Serve para jogos em
-      tela cheia exclusiva, onde nenhuma janela aparece. O programa só manda
-      o texto pelo canal oficial do RivaTuner (o mesmo do HWiNFO e do
-      AIDA64): não injeta nada no jogo.
-        Desligado
-        Só em jogos em tela cheia exclusiva (padrão): enquanto o jogo toma a
-          tela, a linha "PS5 75%   XBOX 77%" e os avisos aparecem no jogo e
-          a janela do overlay fica escondida; fora disso, tudo como sempre.
-        Sempre: mostra no RivaTuner o tempo todo (em jogos com janela pode
-          aparecer junto com o overlay).
-      Mostra o mesmo que o overlay (respeita o atalho e o alerta abaixo de
-      10%) e o último aviso por 5 segundos. Ao fechar o programa, o texto
-      sai do RivaTuner.
-
   - Iniciar com o Windows
       Faz o programa abrir sozinho quando você liga o PC.
-      IMPORTANTE: se mudar o .exe de pasta, desmarque e marque de novo.
+      A escolha fica salva: toda vez que o programa abre, ele confere a
+      inicialização e conserta sozinho se ela sumiu (ex.: programa de
+      "limpeza") ou se você mudou o .exe de pasta.
+      Se ela for desativada no Gerenciador de Tarefas > Inicializar, a
+      bandeja mostra "(desativado no Gerenciador de Tarefas)"; marcar a
+      opção de novo reativa.
+      As últimas 20 aberturas ficam anotadas em
+      %LOCALAPPDATA%\GamepadBatteryOverlay\inicializacoes.log (útil para
+      relatar problemas).
 
   - Sair
       Fecha o programa.
@@ -357,7 +386,7 @@
       Use -IntervaloSeg 30 para gravar a cada 30 segundos, por exemplo.
 
 -------------------------------------------------------------------------------
- 10. LIMITAÇÕES CONHECIDAS (versão 1.7)
+ 10. LIMITAÇÕES CONHECIDAS (versão 1.7.1)
 -------------------------------------------------------------------------------
 
   - Xbox: no cabo USB não há leitura de bateria ("USB mode"). No Bluetooth
@@ -415,6 +444,9 @@
      (se você usou a v1.5 ou anterior, apague também a chave antiga:
         HKEY_CURRENT_USER\Software\DualSenseOverlay )
 
+  4) (Opcional) Apague a pasta %LOCALAPPDATA%\GamepadBatteryOverlay (só tem
+     o registro de inicializações).
+
   O programa não instala nada além disso.
 
 -------------------------------------------------------------------------------
@@ -453,6 +485,17 @@
 -------------------------------------------------------------------------------
  15. HISTÓRICO DE VERSÕES
 -------------------------------------------------------------------------------
+
+  v1.7.1 - Corrigido: "Iniciar com o Windows" agora se conserta sozinho se
+           a inicialização sumir ou o .exe mudar de pasta, e avisa na tela
+           quando abre com o Windows (opção "Aviso ao iniciar com o
+           Windows").
+         - Menu da bandeja reorganizado em grupos: Overlay, Notificações,
+           Controle, RivaTuner e Idioma.
+         - Corrigido: com o RivaTuner aberto, jogos em tela cheia em que o
+           overlay aparece normalmente (otimizações ligadas, DX12) iam para o
+           RivaTuner. Agora o RivaTuner só é usado quando o jogo esconde o
+           overlay de verdade.
 
   v1.7  - Integração opcional com o RivaTuner (RTSS): a bateria aparece
           dentro do jogo, inclusive em tela cheia exclusiva com as
@@ -505,7 +548,7 @@
           ícone na bandeja e ferramenta de teste.
 
 ===============================================================================
-  Gamepad Battery Overlay v1.7  —  © 2026 Rafael Gonçalez
+  Gamepad Battery Overlay v1.7.1  —  © 2026 Rafael Gonçalez
   Gratuito. Venda proibida (licença PolyForm Noncommercial 1.0.0).
   Feito com vibe-coding.
   "PlayStation", "DualSense" e "DualShock" são marcas da Sony Interactive

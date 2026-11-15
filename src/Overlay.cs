@@ -85,6 +85,7 @@ public class OverlayForm : Form
             onlyLow = (int)k.GetValue("OnlyLow", 0) == 1;
             notify = (int)k.GetValue("Notify", 1) == 1;
             sounds = (int)k.GetValue("Sounds", 1) == 1;
+            startupNotice = (int)k.GetValue("StartupNotice", 1) == 1;
             btnToggle = (int)k.GetValue("MuteToggle", 1) == 1;
             forceLow = (int)k.GetValue("ForceLow", 1) == 1;
             PadHid.LegacyScale = (int)k.GetValue("BatteryScale", 0) == 1; // 0 = corrigida (0-8), 1 = antiga (0-10)
@@ -535,7 +536,7 @@ public class OverlayForm : Form
     static int rtssModeOverride = -1;   // --rtss-modo desligado|tela-cheia|sempre: só nesta execução
     RtssOsd rtss;
     bool rtssWriting;      // nosso texto está no RTSS agora
-    bool rtssInGame;       // jogo em tela cheia exclusiva + RTSS mostrando: a janela do overlay fica escondida
+    bool rtssInGame;       // jogo com posse exclusiva da tela + RTSS mostrando: a janela do overlay fica escondida
     string rtssNotice;
     DateTime rtssNoticeUntil;
     ToolStripMenuItem[] rtssItems;
@@ -543,11 +544,12 @@ public class OverlayForm : Form
     // Roda 1x por segundo: vê se há jogo em tela cheia exclusiva e se o RTSS está aberto
     void RtssTick()
     {
-        bool exclusive = Fullscreen.D3DExclusive();
-        bool want = rtssMode == RtssAlways || (rtssMode == RtssFullscreenOnly && exclusive);
-        if (want) rtssWriting = rtss.UpdateIfChanged(RtssText());
+        // Só quando o jogo tem a posse exclusiva da tela (o overlay em janela não apareceria). Jogo em tela cheia
+        // com as otimizações ligadas, ou DX12, continua com o overlay normal (bug #12).
+        bool hidden = Fullscreen.OverlayCannotShow();
+        if (RtssRules.ShouldWrite(rtssMode, hidden)) rtssWriting = rtss.UpdateIfChanged(RtssText());
         else if (rtssWriting) { rtss.Release(); rtssWriting = false; }
-        bool inGame = rtssWriting && exclusive;
+        bool inGame = RtssRules.HideWindow(rtssWriting, hidden);
         if (inGame != rtssInGame) { rtssInGame = inGame; UpdateVisuals(); }
     }
 
@@ -733,28 +735,29 @@ public class OverlayForm : Form
         menu.Items.Add(new ToolStripMenuItem(AppInfo.Name + " v" + AppInfo.Version + "  —  " + AppInfo.Author) { Enabled = false });
         menu.Items.Add(new ToolStripSeparator());
 
+        // Organização do menu (v1.7.1): o que mais se usa fica no topo; o resto em grupos.
+        //   Mostrar overlay
+        //   Overlay ▸        quando aparece, posição, escala da bateria
+        //   Notificações ▸   avisos, sons, aviso ao iniciar com o Windows, testar
+        //   Controle ▸       atalho no controle, procurar controles
+        //   RivaTuner (RTSS) ▸
+        //   Idioma / Language ▸
+        //   Iniciar com o Windows
+        //   Sair
         miShow = new ToolStripMenuItem(Lang.T("Mostrar overlay", "Show overlay"), null, (s, e) => { userHidden = !userHidden; miShow.Checked = !userHidden; UpdateVisuals(); }) { Checked = !userHidden };
         menu.Items.Add(miShow);
+
+        // ---- Overlay ----
+        var ov = new ToolStripMenuItem(Lang.T("Overlay", "Overlay"));
         miOnlyLow = new ToolStripMenuItem(Lang.T("Só mostrar com bateria baixa (≤20%)", "Only show when battery is low (≤20%)"), null, (s, e) =>
         {
             onlyLow = !onlyLow; miOnlyLow.Checked = onlyLow; Save("OnlyLow", onlyLow ? 1 : 0); UpdateVisuals();
         }) { Checked = onlyLow };
-        menu.Items.Add(miOnlyLow);
         miForceLow = new ToolStripMenuItem(Lang.T("Sempre mostrar com bateria abaixo de 10%", "Always show when battery is below 10%"), null, (s, e) =>
         {
             forceLow = !forceLow; miForceLow.Checked = forceLow; Save("ForceLow", forceLow ? 1 : 0); UpdateVisuals();
         }) { Checked = forceLow };
-        menu.Items.Add(miForceLow);
-
-        // Escala da bateria: a corrigida (0-8) é o padrão; a antiga (0-10) fica para quem quiser voltar
-        var scale = new ToolStripMenuItem(Lang.T("Escala da bateria", "Battery scale"));
-        miScaleNew = new ToolStripMenuItem(Lang.T("0 a 8 — corrigida (cheio = 100%)", "0 to 8 — corrected (full = 100%)"), null, (s, e) => ApplyScale(false)) { Checked = !PadHid.LegacyScale };
-        miScaleOld = new ToolStripMenuItem(Lang.T("0 a 10 — antiga (igual ao DSX)", "0 to 10 — old (same as DSX)"), null, (s, e) => ApplyScale(true)) { Checked = PadHid.LegacyScale };
-        scale.DropDownItems.Add(miScaleNew);
-        scale.DropDownItems.Add(miScaleOld);
-        menu.Items.Add(scale);
-
-        var pos = new ToolStripMenuItem(Lang.T("Posição", "Position"));
+        var pos = new ToolStripMenuItem(Lang.T("Posição na tela", "Screen position"));
         string[] names = CornerNames;
         for (int i = 0; i < 4; i++)
         {
@@ -767,42 +770,56 @@ public class OverlayForm : Form
             }) { Checked = corner == code };
             pos.DropDownItems.Add(cornerItems[i]);
         }
-        menu.Items.Add(pos);
+        // Escala da bateria: a corrigida (0-8) é o padrão; a antiga (0-10) fica para quem quiser voltar
+        var scale = new ToolStripMenuItem(Lang.T("Escala da bateria", "Battery scale"));
+        miScaleNew = new ToolStripMenuItem(Lang.T("0 a 8 — corrigida (cheio = 100%)", "0 to 8 — corrected (full = 100%)"), null, (s, e) => ApplyScale(false)) { Checked = !PadHid.LegacyScale };
+        miScaleOld = new ToolStripMenuItem(Lang.T("0 a 10 — antiga (igual ao DSX)", "0 to 10 — old (same as DSX)"), null, (s, e) => ApplyScale(true)) { Checked = PadHid.LegacyScale };
+        scale.DropDownItems.Add(miScaleNew);
+        scale.DropDownItems.Add(miScaleOld);
+        ov.DropDownItems.Add(miOnlyLow);
+        ov.DropDownItems.Add(miForceLow);
+        ov.DropDownItems.Add(new ToolStripSeparator());
+        ov.DropDownItems.Add(pos);
+        ov.DropDownItems.Add(scale);
+        menu.Items.Add(ov);
 
-        // "Idioma / Language" fica nos dois idiomas, para qualquer pessoa achar
-        var lang = new ToolStripMenuItem("Idioma / Language");
-        lang.DropDownItems.Add(new ToolStripMenuItem("Português (Brasil)", null, (s, e) => SetLanguage("pt")) { Checked = !Lang.En });
-        lang.DropDownItems.Add(new ToolStripMenuItem("English", null, (s, e) => SetLanguage("en")) { Checked = Lang.En });
-        menu.Items.Add(lang);
-
-        menu.Items.Add(new ToolStripMenuItem(Lang.T("Procurar controles agora", "Search for controllers now"), null, (s, e) => Scan()));
-        menu.Items.Add(new ToolStripSeparator());
-
-        miNotify = new ToolStripMenuItem(Lang.T("Notificações (conexão / carregamento)", "Notifications (connection / charging)"), null, (s, e) =>
+        // ---- Notificações ----
+        var nt = new ToolStripMenuItem(Lang.T("Notificações", "Notifications"));
+        miNotify = new ToolStripMenuItem(Lang.T("Mostrar notificações (conexão, carga, bateria baixa)", "Show notifications (connection, charging, low battery)"), null, (s, e) =>
         {
             notify = !notify; miNotify.Checked = notify; Save("Notify", notify ? 1 : 0);
         }) { Checked = notify };
-        menu.Items.Add(miNotify);
         miSounds = new ToolStripMenuItem(Lang.T("Sons das notificações", "Notification sounds"), null, (s, e) =>
         {
             sounds = !sounds; miSounds.Checked = sounds; Save("Sounds", sounds ? 1 : 0);
             if (sounds && !mute) SoundFx.Play(Sfx.Show); // amostra ao ligar
         }) { Checked = sounds };
-        menu.Items.Add(miSounds);
+        var miStartNotice = new ToolStripMenuItem(Lang.T("Aviso ao iniciar com o Windows", "Notice when starting with Windows")) { Checked = startupNotice };
+        miStartNotice.Click += (s, e) => { startupNotice = !startupNotice; miStartNotice.Checked = startupNotice; Save("StartupNotice", startupNotice ? 1 : 0); };
+        nt.DropDownItems.Add(miNotify);
+        nt.DropDownItems.Add(miSounds);
+        nt.DropDownItems.Add(miStartNotice);
+        nt.DropDownItems.Add(new ToolStripSeparator());
+        nt.DropDownItems.Add(new ToolStripMenuItem(Lang.T("Testar notificações", "Test notifications"), null, (s, e) => DemoToasts()));
+        menu.Items.Add(nt);
+
+        // ---- Controle ----
+        var ct = new ToolStripMenuItem(Lang.T("Controle", "Controller"));
         miBtn = new ToolStripMenuItem(Lang.T("Atalho no controle (Mute no PS5 · L3+R3 no PS4 e Xbox)", "Controller shortcut (Mute on PS5 · L3+R3 on PS4 and Xbox)"), null, (s, e) =>
         {
             btnToggle = !btnToggle; miBtn.Checked = btnToggle; Save("MuteToggle", btnToggle ? 1 : 0);
         }) { Checked = btnToggle };
-        menu.Items.Add(miBtn);
-        menu.Items.Add(new ToolStripMenuItem(Lang.T("Testar notificações", "Test notifications"), null, (s, e) => DemoToasts()));
+        ct.DropDownItems.Add(miBtn);
+        ct.DropDownItems.Add(new ToolStripMenuItem(Lang.T("Procurar controles agora", "Search for controllers now"), null, (s, e) => Scan()));
+        menu.Items.Add(ct);
 
-        // RivaTuner: a bateria dentro do jogo, inclusive em tela cheia exclusiva (precisa do RTSS aberto)
+        // ---- RivaTuner: a bateria dentro do jogo, inclusive em tela cheia exclusiva (precisa do RTSS aberto) ----
         var rt = new ToolStripMenuItem("RivaTuner (RTSS)");
         var rtStatus = new ToolStripMenuItem("") { Enabled = false };
         rtssItems = new[]
         {
             new ToolStripMenuItem(Lang.T("Desligado", "Off"), null, (s, e) => SetRtssMode(RtssOff)),
-            new ToolStripMenuItem(Lang.T("Só em jogos em tela cheia exclusiva (padrão)", "Only in exclusive fullscreen games (default)"), null, (s, e) => SetRtssMode(RtssFullscreenOnly)),
+            new ToolStripMenuItem(Lang.T("Só quando o jogo esconde o overlay (padrão)", "Only when the game hides the overlay (default)"), null, (s, e) => SetRtssMode(RtssFullscreenOnly)),
             new ToolStripMenuItem(Lang.T("Sempre (pode aparecer junto com o overlay)", "Always (may show alongside the overlay)"), null, (s, e) => SetRtssMode(RtssAlways)),
         };
         for (int i = 0; i < rtssItems.Length; i++) rtssItems[i].Checked = i == rtssMode;
@@ -814,7 +831,15 @@ public class OverlayForm : Form
             : Lang.T("RivaTuner não encontrado (abra o RTSS para usar)", "RivaTuner not found (open RTSS to use this)");
         menu.Items.Add(rt);
 
-        miStartup = new ToolStripMenuItem(Lang.T("Iniciar com o Windows", "Start with Windows"), null, (s, e) => ToggleStartup()) { Checked = IsStartup() };
+        // ---- Idioma: fica nos dois idiomas, para qualquer pessoa achar ----
+        var lang = new ToolStripMenuItem("Idioma / Language");
+        lang.DropDownItems.Add(new ToolStripMenuItem("Português (Brasil)", null, (s, e) => SetLanguage("pt")) { Checked = !Lang.En });
+        lang.DropDownItems.Add(new ToolStripMenuItem("English", null, (s, e) => SetLanguage("en")) { Checked = Lang.En });
+        menu.Items.Add(lang);
+        menu.Items.Add(new ToolStripSeparator());
+
+        miStartup = new ToolStripMenuItem(StartupMenuText(), null, (s, e) => ToggleStartup()) { Checked = IsStartup() };
+        menu.Opening += (s, e) => { miStartup.Checked = IsStartup(); miStartup.Text = StartupMenuText(); }; // reflete mudanças feitas fora (Gerenciador de Tarefas)
         menu.Items.Add(miStartup);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem(Lang.T("Sair", "Exit"), null, (s, e) => { tray.Visible = false; Application.Exit(); }));
@@ -911,6 +936,18 @@ public class OverlayForm : Form
         t.Start();
     }
 
+    // --teste-carga-completa: com o overlay OCULTO, finge um DualSense carregando que completa a carga 2 s depois.
+    // O aviso "Carga completa" tem que aparecer mesmo assim (ele não depende do overlay estar visível).
+    void SimulateFullCharge()
+    {
+        Func<int, int, BatteryState> fake = (pct, st) => new BatteryState
+        { Key = "teste-carga", Path = "teste:carga", Model = PadModel.DualSense, Name = "DualSense", Tag = "PS5", Ok = true, Percent = pct, Status = st };
+        devices["teste:carga"] = fake(87, 1); Rebuild();
+        var t = new System.Windows.Forms.Timer { Interval = 2000 };
+        t.Tick += (s, e) => { t.Dispose(); devices["teste:carga"] = fake(100, 2); Rebuild(); };
+        t.Start();
+    }
+
     // --teste-rajada: aperta o atalho várias vezes seguidas e dispara vários avisos (teste de sobreposição)
     void StressTest()
     {
@@ -933,19 +970,89 @@ public class OverlayForm : Form
         using (var k = Registry.CurrentUser.CreateSubKey(RegKey)) k.SetValue(name, v);
     }
 
+    // ---- Iniciar com o Windows (v1.7.1): escolha salva + entrada conferida e consertada a cada abertura ----
+    static string startupStatus = "";   // resultado do autoconserto desta abertura (vai para o registro de inicializações)
+
+    static bool StartupWanted()
+    {
+        using (var k = Registry.CurrentUser.CreateSubKey(RegKey))
+        {
+            object v = k.GetValue("StartWithWindows");
+            if (v is int) return (int)v == 1;
+            // primeira vez na v1.7.1: herda o que já estava ligado (entrada antiga sem o --inicio-windows)
+            bool had = StartupEntry.Current(StartupEntry.RunKey, RunName) != null;
+            k.SetValue("StartWithWindows", had ? 1 : 0);
+            return had;
+        }
+    }
+
     static bool IsStartup()
     {
-        using (var k = Registry.CurrentUser.OpenSubKey(RunKey)) return k != null && k.GetValue(RunName) != null;
+        return StartupEntry.IsActive(StartupEntry.RunKey, StartupEntry.ApprovedKey, RunName, Application.ExecutablePath);
+    }
+
+    string StartupMenuText()
+    {
+        string t = Lang.T("Iniciar com o Windows", "Start with Windows");
+        if (StartupWanted() && StartupEntry.DisabledInTaskManager(StartupEntry.ApprovedKey, RunName))
+            t += Lang.T("  (desativado no Gerenciador de Tarefas)", "  (disabled in Task Manager)");
+        return t;
     }
 
     void ToggleStartup()
     {
-        using (var k = Registry.CurrentUser.CreateSubKey(RunKey))
+        if (IsStartup())
         {
-            if (IsStartup()) k.DeleteValue(RunName, false);
-            else k.SetValue(RunName, "\"" + Application.ExecutablePath + "\"");
+            StartupEntry.Disable(StartupEntry.RunKey, StartupEntry.ApprovedKey, RunName);
+            Save("StartWithWindows", 0);
+        }
+        else
+        {
+            StartupEntry.Enable(StartupEntry.RunKey, StartupEntry.ApprovedKey, RunName, Application.ExecutablePath);
+            Save("StartWithWindows", 1);
         }
         miStartup.Checked = IsStartup();
+        miStartup.Text = StartupMenuText();
+    }
+
+    // Registro das últimas 20 aberturas, para saber se o Windows abriu o programa:
+    // %LOCALAPPDATA%\GamepadBatteryOverlay\inicializacoes.log
+    static string startReason = "", startDetail = "";
+
+    static void LogStart()
+    {
+        string line = string.Format("{0:yyyy-MM-dd HH:mm:ss}  {1,-34}  v{2}  iniciar com o Windows: {3}  ({4})",
+            DateTime.Now, startReason, AppInfo.Version, startupStatus, startDetail);
+        Exception last = null;
+        for (int attempt = 0; attempt < 5; attempt++) // no boot o disco pode estar ocupado: tenta algumas vezes
+        {
+            try
+            {
+                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GamepadBatteryOverlay");
+                Directory.CreateDirectory(dir);
+                string file = Path.Combine(dir, "inicializacoes.log");
+                var lines = new List<string>(File.Exists(file) ? File.ReadAllLines(file) : new string[0]);
+                lines.Add(line);
+                if (lines.Count > 20) lines.RemoveRange(0, lines.Count - 20);
+                File.WriteAllLines(file, lines.ToArray(), new System.Text.UTF8Encoding(true)); // com marca UTF-8: acentos certos em qualquer visualizador
+                return;
+            }
+            catch (Exception ex) { last = ex; Thread.Sleep(300); }
+        }
+        // não conseguiu: anota o erro num arquivo de reserva, para dar para descobrir o motivo
+        try { File.AppendAllText(Path.Combine(Path.GetTempPath(), "GamepadBatteryOverlay-erro.log"), line + "  ERRO ao gravar o registro: " + last + Environment.NewLine, new System.Text.UTF8Encoding(true)); }
+        catch { }
+    }
+
+    // Aviso de que o programa abriu com o Windows (sem controle conectado ele fica só na bandeja, invisível)
+    bool startupNotice = true; // "Aviso ao iniciar com o Windows" (bandeja > Notificações)
+
+    void StartedWithWindowsToast()
+    {
+        if (!notify || !startupNotice) return;
+        Card(ToastWindow.GlyphGamepad, AccentBlue, Lang.T("Gamepad Battery Overlay ativo", "Gamepad Battery Overlay is running"),
+            Lang.T("Iniciado com o Windows  ·  ícone na bandeja (setinha ^)", "Started with Windows  ·  tray icon (^ arrow)"), -1, false, "start");
+        PlaySfx(Sfx.Show);
     }
 
     // A versão antiga (DualSenseOverlay.exe, até a v1.5) aberta junto mostraria tudo em dobro: fecha ela.
@@ -995,9 +1102,31 @@ public class OverlayForm : Form
             // nome novo na v1.6: traz as configurações e o "Iniciar com o Windows" do nome antigo
             SettingsMigration.CopyKey(SettingsMigration.OldRegKey, RegKey);
             SettingsMigration.MoveRunEntry(RunKey, SettingsMigration.OldRunName, RunName, Application.ExecutablePath);
+            // Iniciar com o Windows: se o usuário quer, garante que a entrada existe e aponta para este .exe (v1.7.1)
+            bool hasArg = Array.IndexOf(args, StartupEntry.AutoArg) >= 0;
+            double sinceExplorer = LogonStart.SecondsSinceExplorer(), uptime = LogonStart.UptimeSeconds();
+            bool fromWindows = LogonStart.Decide(hasArg, sinceExplorer, uptime);
+            string previousEntry;
+            startupStatus = StartupEntry.Heal(StartupEntry.RunKey, StartupEntry.ApprovedKey, RunName, Application.ExecutablePath, StartupWanted(), out previousEntry);
+            startReason = !fromWindows ? "aberto manualmente" : hasArg ? "aberto pelo Windows" : "aberto pelo Windows (sem a marca)";
+            startDetail = string.Format("área de trabalho há {0:0}s, PC ligado há {1:0}s, entrada antes: {2}", sinceExplorer, uptime, previousEntry ?? "(nenhuma)");
+            LogStart();
             Application.EnableVisualStyles();
             var form = new OverlayForm();
+            if (fromWindows)
+            {
+                var ws = new System.Windows.Forms.Timer { Interval = 8000 }; // espera a área de trabalho terminar de abrir (no boot ela demora)
+                ws.Tick += (s, e) => { ws.Dispose(); form.StartedWithWindowsToast(); };
+                ws.Start();
+            }
             if (simulateLow) { form.userHidden = true; form.miShow.Checked = false; }
+            if (Array.IndexOf(args, "--teste-carga-completa") >= 0)
+            {
+                form.userHidden = true; form.miShow.Checked = false;
+                var tc = new System.Windows.Forms.Timer { Interval = 1500 };
+                tc.Tick += (s, e) => { tc.Dispose(); form.SimulateFullCharge(); };
+                tc.Start();
+            }
             if (Array.IndexOf(args, "--teste-rajada") >= 0)
             {
                 form.btnToggle = true;

@@ -10,13 +10,14 @@ Toda vez que o código (`src/`), as ferramentas (`tools/`) ou o `compilar.bat` f
 2. Se algo der **FALHOU**: corrigir na hora e rodar a suíte inteira de novo, até dar 0 FALHOU. Não entregar com falha.
 3. Todo bug corrigido ganha um teste que pega o problema se ele voltar (na suíte ou no checklist manual) e uma linha no histórico de `docs/PROTOCOLO-DE-TESTES.md`.
 4. Funcionalidade nova ganha teste novo na suíte (ou item no checklist manual, se depender do controle na mão).
-5. Dizer ao usuário quais itens do checklist manual (M1–M33) ele precisa conferir por causa da mudança.
+5. Dizer ao usuário quais itens do checklist manual (M1–M35) ele precisa conferir por causa da mudança.
 6. Manter a versão igual em `src/AssemblyInfo.cs`, `Leia-me.txt`, `README.md`, `CHANGELOG.md` e `.github/ISSUE_TEMPLATE` (o teste D1 confere isso).
 
 Detalhes em `docs/PROTOCOLO-DE-TESTES.md`.
 
 ## Convenções
 - Documentação em português do Brasil (Leia-me.txt), com o guia em inglês em ReadMe.txt: toda mudança no Leia-me vale também no ReadMe.
+- Menu da bandeja sempre organizado e intuitivo (pedido do usuário): "Mostrar overlay" no topo; o resto em grupos (Overlay, Notificações, Controle, RivaTuner, Idioma), "Iniciar com o Windows" e "Sair" no fim. Opção nova entra no grupo certo, nunca solta no menu principal; e o Leia-me/ReadMe (seção do menu) acompanha.
 - Textos da interface sempre nos dois idiomas: `Lang.T("português", "English")` (src/Lang.cs). Nenhum texto visível sem tradução.
 - Assinatura: "Rafael Gonçalez", "Feito com vibe-coding".
 - O programa só **lê** os controles (acesso compartilhado). Nunca enviar output reports (LED, vibração), para não interferir com DS4Windows, DSX ou jogos.

@@ -2,6 +2,27 @@
 
 Todas as mudanças importantes deste projeto ficam registradas aqui.
 
+## [1.7.1] - 2026-11-15
+
+### Corrigido
+- **"Iniciar com o Windows" parecia não funcionar** (relatado pelo usuário). Pelo registro do Windows (Shell-Core, eventos 9705-9708): numa inicialização o programa abriu, mas sem controle conectado ele fica só no ícone da bandeja e parecia não ter aberto; em outras, a entrada de inicialização não existia mais. Agora:
+  - a escolha fica salva na configuração do programa (`StartWithWindows`) e, toda vez que o programa abre, a entrada é conferida e **recriada** se sumiu ou **corrigida** se aponta para outro .exe (pasta movida);
+  - a entrada passa a ser `"...\GamepadBatteryOverlay.exe" --inicio-windows`, e ao abrir assim aparece o aviso **"Gamepad Battery Overlay ativo"**;
+  - se a inicialização for desativada no Gerenciador de Tarefas, o autoconserto respeita, e a bandeja mostra "(desativado no Gerenciador de Tarefas)"; marcar a opção de novo reativa;
+  - as últimas 20 aberturas ficam em `%LOCALAPPDATA%\GamepadBatteryOverlay\inicializacoes.log`, com o motivo, há quanto tempo a área de trabalho abriu e o que estava na entrada antes; se não der para gravar, o erro vai para `%TEMP%\GamepadBatteryOverlay-erro.log`.
+  - **No teste real o aviso não apareceu**: a entrada chegou no boot sem a marca `--inicio-windows` (algo reescreveu a entrada; não foi o programa atual) e o registro não gravou. Agora o programa também se reconhece como "aberto com o Windows" quando abre até 3 min depois de a área de trabalho começar (ou até 5 min depois de o PC ligar), e o aviso sai 8 s depois de abrir (antes 4 s).
+- **Com o RivaTuner aberto, todo jogo em tela cheia ia para o RivaTuner**, inclusive quando o overlay normal aparece (otimizações de tela inteira ligadas, jogos DX12). Relatado pelo usuário. O aviso "jogo em tela cheia" do Windows (`SHQueryUserNotificationState`) vale nos dois casos. Medido no *Resident Evil Revelations* (DX9): só a **posse exclusiva da tela** (`D3DKMTCheckExclusiveOwnership`) separa o caso em que a janela não aparece (otimizações desligadas) do caso em que ela aparece (ligadas). Agora o modo padrão usa essa verificação.
+
+### Adicionado
+- Opção **"Aviso ao iniciar com o Windows"** (bandeja > Notificações), ligada por padrão.
+- Modo de teste `--teste-carga-completa` e teste A17: garante que o aviso **"Carga completa"** aparece **mesmo com o overlay oculto** (pergunta do usuário; já funcionava, agora tem teste).
+
+### Alterado
+- **Menu da bandeja reorganizado em grupos**: *Mostrar overlay* no topo; **Overlay** (só com bateria baixa, sempre abaixo de 10%, posição na tela, escala da bateria); **Notificações** (mostrar notificações, sons, aviso ao iniciar com o Windows, testar); **Controle** (atalho, procurar controles); **RivaTuner (RTSS)**; **Idioma / Language**; *Iniciar com o Windows*; *Sair*.
+- A opção do RivaTuner passou a se chamar **"Só quando o jogo esconde o overlay (padrão)"**.
+- Testes R3, S1 (inicialização com chaves de teste no registro), S2 (reconhecer abertura com o Windows), A16 (aberto pelo Windows) e A17 (carga completa com o overlay oculto), e itens manuais M34, M35 e M15 (atualizado).
+- Suíte: o A12 espera os controles entrarem (até 9 s) em vez de olhar um instante só; às vezes falhava porque o DualSense no Bluetooth demorava para mandar a 1ª leitura.
+
 ## [1.7] - 2026-11-14
 
 ### Adicionado

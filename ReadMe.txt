@@ -1,9 +1,9 @@
 ﻿===============================================================================
-                        GAMEPAD BATTERY OVERLAY  -  v1.7
+                       GAMEPAD BATTERY OVERLAY  -  v1.7.1
 ===============================================================================
 
   Author ......: Rafael Gonçalez
-  Version .....: 1.7  (2026-11-14)
+  Version .....: 1.7.1  (2026-11-15)
   System ......: Windows 10 / 11
   Controllers .: DualSense (PS5), DualShock 4 (PS4) and Xbox
                  Bluetooth (tested) and USB
@@ -91,8 +91,9 @@
      appears and, in the top-right corner of the screen, the controller's
      battery.
   4) A controller icon with a small battery bar appears in the Windows tray
-     (near the clock). If you don't see it, click the "^" arrow in the tray to show hidden icons. All the
-     options are in that icon's right-click menu.
+     (near the clock). If you don't see it, click the "^" arrow in the
+     tray to show hidden icons. All the options are in that icon's
+     right-click menu.
 
   LANGUAGE: the program starts in Portuguese if Windows is in Portuguese,
   and in English otherwise. To change it: tray menu > "Idioma / Language"
@@ -166,7 +167,7 @@
   (and 80% in DSX). Measuring the controllers made it clear that on
   battery they stop at level 8. This was confirmed with DS4Windows, which
   also shows 100% for the same controller. The old scale is still
-  available: tray menu > "Battery scale" > "0 to 10 — old (same as DSX)".
+  available: tray menu > Overlay > "Battery scale" > "0 to 10 — old".
 
 -------------------------------------------------------------------------------
  5. CRITICAL BATTERY ALERT (BELOW 10%)
@@ -182,7 +183,7 @@
   When you plug in the cable, the controller leaves the critical state and
   the overlay goes back to what you had chosen.
 
-  To turn it off: tray menu > uncheck
+  To turn it off: tray menu > Overlay > uncheck
   "Always show when battery is below 10%".
 
 -------------------------------------------------------------------------------
@@ -219,7 +220,7 @@
     Battery very low .... two low tones
     Overlay hidden ...... falling "tick"
     Overlay visible ..... rising "tick"
-  To turn them off: tray menu > "Notification sounds".
+  To turn them off: tray menu > Notifications > "Notification sounds".
   The volume follows the Windows Volume Mixer (the program shows up there).
 
   Connecting and disconnecting are detected right away (Windows notifies
@@ -227,7 +228,7 @@
   to confirm, avoiding false alerts.
 
   To see the notifications without touching the controller: right-click the
-  tray icon > "Test notifications".
+  tray icon > Notifications > "Test notifications".
 
 -------------------------------------------------------------------------------
  7. CONTROLLER SHORTCUT: SHOW/HIDE THE OVERLAY
@@ -261,16 +262,33 @@
   switch the Windows theme.
   Hovering over it shows each controller's exact %.
 
+  The menu is organized like this (the most used items are at the top):
+
+    Show overlay
+    Overlay  >          Only show when battery is low / Always show below
+                        10% / Screen position / Battery scale
+    Notifications  >    Show notifications / Sounds / Notice when starting
+                        with Windows / Test notifications
+    Controller  >       Controller shortcut / Search for controllers now
+    RivaTuner (RTSS)  >
+    Idioma / Language  >
+    Start with Windows
+    Exit
+
   - Show overlay
       Turns the overlay on/off (same as the controller shortcut).
+      Notifications keep showing while the overlay is hidden, including
+      "Fully charged".
 
+  OVERLAY
   - Only show when battery is low (≤20%)
       Each controller only appears when its battery drops to 20% or less
       (and it isn't charging).
-
   - Always show when battery is below 10%
       Turns the mandatory alert from section 5 on/off. It's ON by default.
-
+  - Screen position
+      Chooses the screen corner: top right, top left, bottom right or
+      bottom left. The notifications follow.
   - Battery scale
       "0 to 8 — corrected" (default): full = 100%.
       "0 to 10 — old": the calculation from v1.2 and earlier, same as DSX
@@ -278,50 +296,59 @@
       the new scale looks wrong on some controller. The change applies
       immediately.
 
-  - Position
-      Chooses the screen corner: top right, top left, bottom right or
-      bottom left. The notifications follow.
-
-  - Idioma / Language
-      Português (Brasil) or English. See section 9.
-
-  - Search for controllers now
-      Forces a new search for controllers (normally it's automatic).
-
-  - Notifications (connection / charging)
-      Turns the automatic notifications on/off.
-
+  NOTIFICATIONS
+  - Show notifications (connection, charging, low battery)
+      Turns all automatic notifications on/off (section 6).
   - Notification sounds
-      Turns the notification sound effects on/off (section 6). When turned
-      on, it plays a sample "tick".
-
-  - Controller shortcut (Mute on PS5 · L3+R3 on PS4 and Xbox)
-      Turns the shortcut from section 7 on/off.
-
+      Turns the notification sound effects on/off. When turned on, it plays
+      a sample "tick".
+  - Notice when starting with Windows
+      When the program opens with Windows, it shows "Gamepad Battery Overlay
+      is running" about 8 seconds after the desktop appears (with no
+      controller connected the program only lives in the tray icon, hence
+      the notice). It's ON by default. Uncheck it if you don't want it.
   - Test notifications
       Shows every kind of notification in sequence.
+
+  CONTROLLER
+  - Controller shortcut (Mute on PS5 · L3+R3 on PS4 and Xbox)
+      Turns the shortcut from section 7 on/off.
+  - Search for controllers now
+      Forces a new search for controllers (normally it's automatic).
 
   - RivaTuner (RTSS)
       Shows the battery INSIDE the game, drawn by RivaTuner (it must be
       running; it comes with MSI Afterburner). It's for games in exclusive
       full screen, where no window can appear. The program only sends the
       text through RivaTuner's official channel (the same one HWiNFO and
-      AIDA64 use): it doesn't inject anything into the game.
+      AIDA64 use): it doesn't inject anything into the game. The submenu
+      shows whether RivaTuner is running.
         Off
-        Only in exclusive fullscreen games (default): while the game owns
-          the screen, the "PS5 75%   XBOX 77%" line and the notifications
-          show in the game and the overlay window is hidden; otherwise,
-          everything works as usual.
+        Only when the game hides the overlay (default): only when the game
+          really takes over the screen (exclusive mode, where the window
+          wouldn't appear) do the "PS5 75%   XBOX 77%" line and the
+          notifications go to the game, with the overlay window hidden. A
+          fullscreen game where the overlay shows (fullscreen optimizations
+          on, or DX12) keeps the normal overlay, even with RivaTuner open.
         Always: shows in RivaTuner all the time (in windowed games it may
           appear alongside the overlay).
       It shows the same as the overlay (it follows the shortcut and the
       below-10% alert) plus the latest notification for 5 seconds. When the
       program closes, the text is removed from RivaTuner.
 
+  - Idioma / Language
+      Português (Brasil) or English. See section 9.
+
   - Start with Windows
       Makes the program open by itself when you turn on the PC.
-      IMPORTANT: if you move the .exe to another folder, uncheck and check
-      it again.
+      The choice is saved: every time the program opens, it checks the
+      startup entry and fixes it by itself if it disappeared (e.g. a
+      "cleanup" program) or if you moved the .exe to another folder.
+      If it's disabled in Task Manager > Startup apps, the tray shows
+      "(disabled in Task Manager)"; checking the option again re-enables it.
+      The last 20 starts are logged in
+      %LOCALAPPDATA%\GamepadBatteryOverlay\inicializacoes.log (useful when
+      reporting problems).
 
   - Exit
       Closes the program.
@@ -380,7 +407,7 @@
       example.
 
 -------------------------------------------------------------------------------
- 11. KNOWN LIMITATIONS (version 1.7)
+ 11. KNOWN LIMITATIONS (version 1.7.1)
 -------------------------------------------------------------------------------
 
   - Xbox: there's no battery reading on a USB cable ("USB mode"). On
@@ -440,6 +467,9 @@
      (if you used v1.5 or earlier, also delete the old key:
         HKEY_CURRENT_USER\Software\DualSenseOverlay )
 
+  4) (Optional) Delete the %LOCALAPPDATA%\GamepadBatteryOverlay folder (it
+     only has the startup log).
+
   The program doesn't install anything else.
 
 -------------------------------------------------------------------------------
@@ -478,6 +508,16 @@
 -------------------------------------------------------------------------------
  16. VERSION HISTORY
 -------------------------------------------------------------------------------
+
+  v1.7.1 - Fixed: "Start with Windows" now repairs itself if the startup
+           entry disappears or the .exe is moved, and shows a notification
+           when it opens with Windows ("Notice when starting with Windows"
+           option).
+         - Tray menu reorganized into groups: Overlay, Notifications,
+           Controller, RivaTuner and Language.
+         - Fixed: with RivaTuner open, fullscreen games where the overlay
+           shows normally (optimizations on, DX12) went to RivaTuner. Now
+           RivaTuner is only used when the game really hides the overlay.
 
   v1.7  - Optional RivaTuner (RTSS) integration: the battery shows inside
           the game, even in exclusive full screen with fullscreen
@@ -529,7 +569,7 @@
           tray icon and test tool.
 
 ===============================================================================
-  Gamepad Battery Overlay v1.7  —  © 2026 Rafael Gonçalez
+  Gamepad Battery Overlay v1.7.1  —  © 2026 Rafael Gonçalez
   Free. Selling it is prohibited (PolyForm Noncommercial 1.0.0 license).
   Made with vibe-coding.
   "PlayStation", "DualSense" and "DualShock" are trademarks of Sony

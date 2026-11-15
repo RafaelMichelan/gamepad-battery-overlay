@@ -5,7 +5,7 @@ title: "[Teste] "
 labels: teste
 ---
 
-**Versão do programa:** 1.7
+**Versão do programa:** 1.7.1
 **Windows:** (ex.: Windows 11 23H2)
 **Controle:** (DualSense / DualSense Edge / DualShock 4 1ª ou 2ª geração / Xbox Series / Xbox One / Elite 2)
 **Conexão:** (Bluetooth / USB)
